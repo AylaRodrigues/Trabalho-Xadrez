@@ -70,7 +70,7 @@ int printTabuleiro(int tab[8][8]){
 	{
 		printf("   %d  ",i);
 	}
-	printf("\n\n\n negativo=pretas; positivo=brancas\n 1=peão; 2=cavalo; 3=bispo;\n 4=torre; 5=dama; 6=rei;\n\n");
+	printf("\n\n\n Negativo = pretas; Positivo = bBancas\n 1 = peão;  2 = cavalo; 3 = bispo;\n 4 = torre; 5 = dama;   6 = rei;\n\n");
 }
 
 //verifica se houve alteração no tabuleiro (Se houve movimentação de alguma peça)
@@ -1281,9 +1281,7 @@ int main(){
 					x++;
 				}
 			}
-		
 		}
-		
 		system("cls");
 		printTabuleiro(tab);
 		if(verifTab == 1){
@@ -1297,6 +1295,5 @@ int main(){
 		}
 		
 	}
-	
 	return 0;
 }
