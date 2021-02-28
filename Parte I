@@ -338,7 +338,7 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			printf("> Não há jogadas para essa peça.\n");
 	}else{
 		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: peão de %d %d ",i+1,linha,coluna);
+			printf(" Opção de jogada %d: torre de %d %d ",i+1,linha,coluna);
 			printf("para %d %d\n\n", torre[i].linhaPara,torre[i].colunaPara);
 		}
 		printf("> Escolha uma das opções(digite o numero):\n");
@@ -359,7 +359,7 @@ int jogadaCavalo(int linha, int coluna, int tab[8][8]){
 	if(tab[linha][coluna] > 0) //peça branca
 	{ 
 		numPeca = 2;
-		if(linha-2>=0 && coluna +1<=7 && tab[linha-2][coluna+1]<=0){
+		if(linha-2>=0 && coluna+1<=7 && tab[linha-2][coluna+1]<=0){
 			cavalo[ct].linhaDe = linha;
 			cavalo[ct].colunaDe = coluna;
 			cavalo[ct].linhaPara = linha-2;
@@ -393,7 +393,8 @@ int jogadaCavalo(int linha, int coluna, int tab[8][8]){
 			cavalo[ct].linhaPara = linha+1;
 			cavalo[ct].colunaPara = coluna+2;
 			ct++;
-		}if(linha+1<=7 && coluna-2>=0 && tab[linha+1][coluna-2]<=0){
+		}
+		if(linha+1<=7 && coluna-2>=0 && tab[linha+1][coluna-2]<=0){
 			cavalo[ct].linhaDe = linha;
 			cavalo[ct].colunaDe = coluna;
 			cavalo[ct].linhaPara = linha+1;
@@ -451,7 +452,8 @@ int jogadaCavalo(int linha, int coluna, int tab[8][8]){
 			cavalo[ct].linhaPara = linha+1;
 			cavalo[ct].colunaPara = coluna+2;
 			ct++;
-		}if(linha+1>=7 && coluna-2>=0 && tab[linha+1][coluna-2]>=0){
+		}
+		if(linha+1<=7 && coluna-2>=0 && tab[linha+1][coluna-2]>=0){
 			cavalo[ct].linhaDe = linha;
 			cavalo[ct].colunaDe = coluna;
 			cavalo[ct].linhaPara = linha+1;
@@ -478,7 +480,7 @@ int jogadaCavalo(int linha, int coluna, int tab[8][8]){
 			printf("> Não há jogadas para essa peça.\n");
 	}else{
 		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: peão de %d %d ",i+1,linha,coluna);
+			printf(" Opção de jogada %d: cavalo de %d %d ",i+1,linha,coluna);
 			printf("para %d %d\n\n", cavalo[i].linhaPara,cavalo[i].colunaPara);
 		}
 		printf("> Escolha uma das opções(digite o numero):\n");
@@ -490,7 +492,118 @@ int jogadaCavalo(int linha, int coluna, int tab[8][8]){
 }
 
 int jogadaBispo(int linha, int coluna, int tab[8][8]){
-	struct jogada bispo;
+	
+	struct jogada bispo[13];
+	int ct=0;
+	int escolhida;
+	int numPeca;
+	printf("Você escolheu o bispo.\n");
+	
+	
+	if(tab[linha][coluna] > 0) //peça branca
+	{
+		numPeca = 3;
+		int j = coluna;
+		for(int i = linha; i>=0; i--) //diagonal direita pra frente
+		{
+			bispo[ct].colunaDe = coluna;
+			bispo[ct].linhaDe = linha;
+			if(i-1>= 0 && i+1<=7 && tab[i-1][j+1]==0)
+				{
+					bispo[ct].linhaPara = i-1;
+					bispo[ct].colunaPara = j+1;
+					ct++;
+				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]<0){
+					bispo[ct].linhaPara = i-1;
+					bispo[ct].colunaPara = j+1;
+					ct++;
+					break;
+				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]>0){
+					break;
+				}
+			j++;
+		}
+		j=coluna;
+		for(int i = linha; i>=0; i--) //diagonal esquerda pra frente
+		{
+			bispo[ct].colunaDe = coluna;
+			bispo[ct].linhaDe = linha;
+				if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]==0)
+				{
+					bispo[ct].linhaPara = i-1;
+					bispo[ct].colunaPara = j-1;
+					ct++;
+				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]<0){
+					bispo[ct].linhaPara = i-1;
+					bispo[ct].colunaPara = j-1;
+					ct++;
+					break;
+				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]>0){
+					break;
+				}
+			j--;
+		}
+		j=coluna;
+		for(int i = linha; i<=7; i++) //diagonal direita pra trás
+		{
+			bispo[ct].colunaDe = coluna;
+			bispo[ct].linhaDe = linha;
+				if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]==0)
+				{
+					bispo[ct].linhaPara = i+1;
+					bispo[ct].colunaPara = j+1;
+					ct++;
+				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]<0){
+					bispo[ct].linhaPara = i+1;
+					bispo[ct].colunaPara = j+1;
+					ct++;
+					break;
+				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]>0){
+					break;
+				}
+			j++;
+		}
+		j=coluna;
+		for(int i = linha; i>=0; i--) //diagonal esquerda pra trás
+		{
+			bispo[ct].colunaDe = coluna;
+			bispo[ct].linhaDe = linha;
+				if(i+1<=7 && j-1>=0 && tab[i+1][j-1]==0)
+				{
+					bispo[ct].linhaPara = i+1;
+					bispo[ct].colunaPara = j-1;
+					ct++;
+				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]<0){
+					bispo[ct].linhaPara = i+1;
+					bispo[ct].colunaPara = j-1;
+					ct++;
+					break;
+				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]>0){
+					break;
+				}
+			j--;
+		}
+		j=coluna;
+	}else //peca preta
+	{
+		numPeca = -3;
+		
+		
+	}
+	
+	
+	if(ct==0){
+			printf("> Não há jogadas para essa peça.\n");
+	}else{
+		for(int i =0; i<ct; i++){
+			printf(" Opção de jogada %d: bispo de %d %d ",i+1,linha,coluna);
+			printf("para %d %d\n\n", bispo[i].linhaPara,bispo[i].colunaPara);
+		}
+		printf("> Escolha uma das opções(digite o numero):\n");
+		scanf("%d",&escolhida);
+		escolhida--;
+		jogadaEscolhida(tab,&bispo[escolhida],numPeca);
+	}
 }
 
 int jogadaDama(int linha, int coluna, int tab[8][8]){
@@ -668,7 +781,7 @@ int main(){
 	
 	setlocale(LC_ALL,"");
 	
-	int tab[8][8] = {0,0,0,0,0,1,0,0,1,0,0,0,5,0,0,0,0,0,0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	int tab[8][8] /*= {0,0,0,0,0,-1,0,0,1,0,0,0,-5,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0}*/;
 	int tabMod[8][8]; //tabuleiro que servira para verificar se houve uma jogada ou não
 	int jogo = 0; // variavel que dara continuidade ao jogo (enquanto o jogo estiver rolando, seu valor será 1, quando 0 o jogo para).
 	char iniciar[10];//varavel que servira de comando para iniciar o tabuleiro.
@@ -680,7 +793,7 @@ int main(){
 	
 	if(strcmp(iniciar,"iniciar") ==0){
 		system("cls");
-		//IniciaTabuleiro(tab);
+		IniciaTabuleiro(tab);
 		printTabuleiro(tab);
 		jogo=1;
 	}
