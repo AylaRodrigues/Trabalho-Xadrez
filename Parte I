@@ -48,6 +48,53 @@ int IniciaTabuleiro(int tab[8][8]){
 	}
 	
 }
+
+int printTabuleiro(int tab[8][8]){
+	printf("\n");
+	for(int i =0; i<8; i++)
+	{
+		for(int j=0; j<8; j++)
+		{
+			if(tab[i][j] >= 0 ){
+				printf("  %d ",tab[i][j]);
+			}else{
+				printf(" %d ",tab[i][j]);
+			}
+		}	
+		printf("\n");
+	}
+	
+	printf("\n\n negativo=pretas; positivo=brancas\n 1=peão; 2=cavalo; 3=bispo;\n 4=torre; 5=dama; 6=rei;\n\n");
+}
+//verifica se houve alteração no tabuleiro (Se houve movimentação de alguma peça)
+int verificaTabuleiro(int tab_1[8][8], int tab_2[8][8]){
+	int ct =0;
+	
+	for(int i = 0; i<8; i++)
+	{
+		for(int j = 0; j<8; j++)
+		{
+			if(tab_1[i][j] == tab_2[i][j])
+			{
+				ct++;
+			}
+		}
+	}
+	
+	if(ct == 64){
+		return 0;
+	}else{
+		for(int i = 0; i<8; i++)
+		{
+			for(int j = 0; j<8; j++)
+			{
+				tab_2[i][j] = tab_1[i][j];	
+			}
+		}
+		return 1;
+	}
+	
+}
 //para modificar o tabuleiro de acordo com a jgoada escolhida
 int jogadaEscolhida(int tab[8][8], struct jogada *peca, int numPeca){ 
 	
@@ -75,21 +122,21 @@ int jogadaPeao(int linha, int coluna, int tab[8][8]){
 	if(tab[linha][coluna] > 0) //peça branca
 	{ 
 		numPeca = 1;
-		if(tab[linha-1][coluna] == 0){
+		if(linha-1>=0 && tab[linha-1][coluna] == 0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna;
 			peao[ct].linhaPara = linha -1;
 			ct++;
 		}
-		if(coluna + 1 <= 7 && tab[linha-1][coluna+1]<0){
+		if(linha-1>= 0 && tab[linha-1][coluna+1]<0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna +1;
 			peao[ct].linhaPara = linha -1;
 			ct++;
 		}
-		if(coluna - 1 >= 0 && tab[linha-1][coluna-1]<0){
+		if(linha-1>= 0 && tab[linha-1][coluna-1]<0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna -1;
@@ -99,21 +146,21 @@ int jogadaPeao(int linha, int coluna, int tab[8][8]){
 	}else //peça preta
 	{ 
 		numPeca = -1;
-		if(tab[linha+1][coluna] == 0){
+		if(linha+1<= 7 && tab[linha+1][coluna] == 0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna;
 			peao[ct].linhaPara = linha +1;
 			ct++;
 		}
-		if(coluna + 1 <= 7 && tab[linha+1][coluna+1]>0){
+		if(coluna+1 <= 7 && tab[linha+1][coluna+1]>0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna +1;
 			peao[ct].linhaPara = linha +1;
 			ct++;
 		}
-		if(coluna - 1 >= 0 && tab[linha+1][coluna-1]>0){
+		if(coluna+1 <= 7 && tab[linha+1][coluna-1]>0){
 			peao[ct].colunaDe = coluna;
 			peao[ct].linhaDe = linha;
 			peao[ct].colunaPara = coluna -1;
@@ -153,14 +200,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].colunaPara = coluna;
 			
-			if(tab[i][coluna] == 0){
-				torre[ct].linhaPara = i;
+			if(i-1>=0 && tab[i-1][coluna] == 0){
+				torre[ct].linhaPara = i-1;
 				ct++;
-			}else if(tab[i][coluna] < 0){
-				torre[ct].linhaPara = i;
+			}else if(i-1>=0 && tab[i-1][coluna] < 0){
+				torre[ct].linhaPara = i-1;
 				ct++;
 				break;
-			}else if(tab[i][coluna] > 0){
+			}else if(i-1>=0 && tab[i-1][coluna] > 0){
 				break;
 			}
 		}
@@ -170,14 +217,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].colunaPara = coluna;
 			
-			if(tab[i][coluna] == 0){
-				torre[ct].linhaPara = i;
+			if(i+1<=7 && tab[i+1][coluna] == 0){
+				torre[ct].linhaPara = i+1;
 				ct++;
-			}else if(tab[i][coluna] < 0){
-				torre[ct].linhaPara = i;
+			}else if(i+1<=7 && tab[i+1][coluna] < 0){
+				torre[ct].linhaPara = i+1;
 				ct++;
 				break;
-			}else if(tab[i][coluna] > 0){
+			}else if(i+1<=7 && tab[i+1][coluna] > 0){
 				break;
 			}	
 		}
@@ -187,14 +234,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].linhaPara = linha;
 			
-			if(tab[linha][i] == 0){
-				torre[ct].colunaPara = i;
+			if(i+1<=7 && tab[linha][i+1] == 0){
+				torre[ct].colunaPara = i+1;
 				ct++;
-			}else if(tab[linha][i] < 0){
-				torre[ct].colunaPara = i;
+			}else if(i+1<=7 && tab[linha][i+1] < 0){
+				torre[ct].colunaPara = i+1;
 				ct++;
 				break;
-			}else if(tab[linha][i] > 0){
+			}else if(i+1<=7 && tab[linha][i+1] > 0){
 				break;
 			}		
 		}
@@ -204,18 +251,17 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].linhaPara = linha;
 			
-			if(tab[linha][i] == 0){
-				torre[ct].colunaPara = i;
+			if(i-1>=0 && tab[linha][i-1] == 0){
+				torre[ct].colunaPara = i-1;
 				ct++;
-			}else if(tab[linha][i] < 0){
-				torre[ct].colunaPara = i;
+			}else if(i-1>=0 && tab[linha][i-1]<0){
+				torre[ct].colunaPara = i-1;
 				ct++;
 				break;
-			}else if(tab[linha][i] > 0){
+			}else if(i-1>=0 && tab[linha][i]>0){
 				break;
 			}		
 		}
-		
 	}else //peça preta
 	{
 		numPeca = -4;
@@ -225,14 +271,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].colunaPara = coluna;
 			
-			if(tab[i][coluna] == 0){
-				torre[ct].linhaPara = i;
+			if(i-1>=0 && tab[i-1][coluna] == 0){
+				torre[ct].linhaPara = i-1;
 				ct++;
-			}else if(tab[i][coluna] > 0){
-				torre[ct].linhaPara = i;
+			}else if(i-1>=0 && tab[i-1][coluna] > 0){
+				torre[ct].linhaPara = i-1;
 				ct++;
 				break;
-			}else if(tab[i][coluna] < 0){
+			}else if(i-1>=0 && tab[i-1][coluna] < 0){
 				break;
 			}	
 		}
@@ -242,14 +288,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].colunaPara = coluna;
 			
-			if(tab[i][coluna] == 0){
-				torre[ct].linhaPara = i;
+			if(i+1<7 && tab[i+1][coluna] == 0){
+				torre[ct].linhaPara = i+1;
 				ct++;
-			}else if(tab[i][coluna] > 0){
-				torre[ct].linhaPara = i;
+			}else if(i+1<7 && tab[i+1][coluna] > 0){
+				torre[ct].linhaPara = i+1;
 				ct++;
 				break;
-			}else if(tab[i][coluna] < 0){
+			}else if(i+1<=7 && tab[i+1][coluna] < 0){
 				break;
 			}		
 		}
@@ -259,14 +305,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].linhaPara = linha;
 			
-			if(tab[linha][i] == 0){
-				torre[ct].colunaPara = i;
+			if(i+1<=7 && tab[linha][i+1] == 0){
+				torre[ct].colunaPara = i+1;
 				ct++;
-			}else if(tab[linha][i] > 0){
-				torre[ct].colunaPara = i;
+			}else if(i+1<=7 && tab[linha][i] > 0){
+				torre[ct].colunaPara = i+1;
 				ct++;
 				break;
-			}else if(tab[linha][i] < 0){
+			}else if(i+1<=7 && tab[linha][i+1] < 0){
 				break;
 			}		
 		}
@@ -276,14 +322,14 @@ int jogadaTorre(int linha, int coluna, int tab[8][8]){
 			torre[ct].linhaDe = linha;
 			torre[ct].linhaPara = linha;
 			
-			if(tab[linha][i] == 0){
-				torre[ct].colunaPara = i;
+			if(i-1>=0 && tab[linha][i-1] == 0){
+				torre[ct].colunaPara = i-1;
 				ct++;
-			}else if(tab[linha][i] > 0){
-				torre[ct].colunaPara = i;
+			}else if(i-1>=0 && tab[linha][i-1] > 0){
+				torre[ct].colunaPara = i-1;
 				ct++;
 				break;
-			}else if(tab[linha][i] < 0){
+			}else if(i-1>=0 && tab[linha][i-1] < 0){
 				break;
 			}		
 		}
@@ -448,7 +494,169 @@ int jogadaBispo(int linha, int coluna, int tab[8][8]){
 }
 
 int jogadaDama(int linha, int coluna, int tab[8][8]){
-	struct jogada dama;
+	
+	struct jogada dama[27];
+	int ct = 0; //contador para o indice do vetor
+	int escolhida;
+	int numPeca;
+	
+	printf("Você escolheu a dama.\n");
+	
+	if(tab[linha][coluna]>0) //peça branca
+	{
+			numPeca = 5;
+		for(int i = linha; i>=0; i--) //dama avança
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].colunaPara = coluna;
+			
+			if(i-1>=0 && tab[i-1][coluna] == 0){
+				dama[ct].linhaPara = i-1;
+				ct++;
+			}else if(i-1>=0 && tab[i-1][coluna] < 0){
+				dama[ct].linhaPara = i-1;
+				ct++;
+				break;
+			}else if(i-1>=0 && tab[i-1][coluna] > 0){
+				break;
+			}
+		}
+		for(int i = linha; i<=7; i++) //dama recua
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].colunaPara = coluna;
+			
+			if(i+1<=7 && tab[i+1][coluna] == 0){
+				dama[ct].linhaPara = i+1;
+				ct++;
+			}else if(i+1<=7 && tab[i+1][coluna] < 0){
+				dama[ct].linhaPara = i+1;
+				ct++;
+				break;
+			}else if(i+1<=7 && tab[i+1][coluna] > 0){
+				break;
+			}	
+		}
+		for(int i = coluna; i<=7; i++) //dama para direita
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].linhaPara = linha;
+			
+			if(i+1<=7 && tab[linha][i+1] == 0){
+				dama[ct].colunaPara = i+1;
+				ct++;
+			}else if(i+1<=7 && tab[linha][i+1] < 0){
+				dama[ct].colunaPara = i+1;
+				ct++;
+				break;
+			}else if(i+1<=7 && tab[linha][i+1] > 0){
+				break;
+			}		
+		}
+		for(int i = coluna; i>=0; i--) //dama para esquerda
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].linhaPara = linha;
+			
+			if(i-1>=0 && tab[linha][i-1] == 0){
+				dama[ct].colunaPara = i-1;
+				ct++;
+			}else if(i-1>=0 && tab[linha][i-1]<0){
+				dama[ct].colunaPara = i-1;
+				ct++;
+				break;
+			}else if(i-1>=0 && tab[linha][i]>0){
+				break;
+			}		
+		}
+	}else //peça preta
+	{
+		numPeca = -5;
+		for(int i = linha; i>=0; i--) //dama recua
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].colunaPara = coluna;
+			
+			if(i-1>=0 && tab[i-1][coluna] == 0){
+				dama[ct].linhaPara = i-1;
+				ct++;
+			}else if(i-1>=0 && tab[i-1][coluna] > 0){
+				dama[ct].linhaPara = i-1;
+				ct++;
+				break;
+			}else if(i-1>=0 && tab[i-1][coluna] < 0){
+				break;
+			}	
+		}
+		for(int i = linha; i<=7; i++) //dama avança
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].colunaPara = coluna;
+			
+			if(i+1<7 && tab[i+1][coluna] == 0){
+				dama[ct].linhaPara = i+1;
+				ct++;
+			}else if(i+1<7 && tab[i+1][coluna] > 0){
+				dama[ct].linhaPara = i+1;
+				ct++;
+				break;
+			}else if(i+1<=7 && tab[i+1][coluna] < 0){
+				break;
+			}		
+		}
+		for(int i = coluna; i<=7; i++) //dama para direita
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].linhaPara = linha;
+			
+			if(i+1<=7 && tab[linha][i+1] == 0){
+				dama[ct].colunaPara = i+1;
+				ct++;
+			}else if(i+1<=7 && tab[linha][i] > 0){
+				dama[ct].colunaPara = i+1;
+				ct++;
+				break;
+			}else if(i+1<=7 && tab[linha][i+1] < 0){
+				break;
+			}		
+		}
+		for(int i = coluna; i>=0; i--) //dama para esquerda
+		{
+			dama[ct].colunaDe = coluna;
+			dama[ct].linhaDe = linha;
+			dama[ct].linhaPara = linha;
+			
+			if(i-1>=0 && tab[linha][i-1] == 0){
+				dama[ct].colunaPara = i-1;
+				ct++;
+			}else if(i-1>=0 && tab[linha][i-1] > 0){
+				dama[ct].colunaPara = i-1;
+				ct++;
+				break;
+			}else if(i-1>=0 && tab[linha][i-1] < 0){
+				break;
+			}		
+		}
+	}
+	if(ct==0){
+			printf("> Não há jogadas para essa peça.\n");
+	}else{
+		for(int i =0; i<ct; i++){
+			printf(" Opção de jogada %d: peão de %d %d ",i+1,linha,coluna);
+			printf("para %d %d\n\n", dama[i].linhaPara,dama[i].colunaPara);
+		}
+		printf("> Escolha uma das opções(digite o numero):\n");
+		scanf("%d",&escolhida);
+		escolhida--;
+		jogadaEscolhida(tab,&dama[escolhida],numPeca);
+	}
 	
 }
 
@@ -456,29 +664,12 @@ int jogadaRei(int linha, int coluna, int tab[8][8]){
 	printf("jogada do rei");
 } 
 
-int printTabuleiro(int tab[8][8]){
-	printf("\n");
-	for(int i =0; i<8; i++)
-	{
-		for(int j=0; j<8; j++)
-		{
-			if(tab[i][j] >= 0 ){
-				printf("  %d ",tab[i][j]);
-			}else{
-				printf(" %d ",tab[i][j]);
-			}
-		}	
-		printf("\n");
-	}
-	
-	printf("\n\n negativo=pretas; positivo=brancas\n 1=peão; 2=cavalo; 3=bispo;\n 4=torre; 5=dama; 6=rei;\n\n");
-}
-
 int main(){
 	
 	setlocale(LC_ALL,"");
 	
-	int tab[8][8] /*= {0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}*/;
+	int tab[8][8] = {0,0,0,0,0,1,0,0,1,0,0,0,5,0,0,0,0,0,0,0,-2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	int tabMod[8][8]; //tabuleiro que servira para verificar se houve uma jogada ou não
 	int jogo = 0; // variavel que dara continuidade ao jogo (enquanto o jogo estiver rolando, seu valor será 1, quando 0 o jogo para).
 	char iniciar[10];//varavel que servira de comando para iniciar o tabuleiro.
 	struct jogada jogador;
@@ -489,13 +680,14 @@ int main(){
 	
 	if(strcmp(iniciar,"iniciar") ==0){
 		system("cls");
-		IniciaTabuleiro(tab);
+		//IniciaTabuleiro(tab);
 		printTabuleiro(tab);
 		jogo=1;
 	}
 	
 	int rodada = 0;// quando for impar = vez das brancas/ par = vez das pretas
 	int x= 0; // variável para caso o jogador escolha uma casa zerada (sem peça)
+	int verifTab; //variável para verificar se houve uma jogada ou não
 	while(jogo == 1)
 	{
 		rodada++;
@@ -510,27 +702,56 @@ int main(){
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -1)
 				{
 					jogadaPeao(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -2)
 				{
 					jogadaCavalo(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -3)
 				{
 					jogadaBispo(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -4)
 				{
 					jogadaTorre(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -5)
 				{
 					jogadaDama(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -6)
 				{
-					jogadaRei(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}
 			}
 		}else{
@@ -544,32 +765,62 @@ int main(){
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 1)
 				{
 					jogadaPeao(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 2)
 				{
 					jogadaCavalo(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 3)
 				{
 					jogadaBispo(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 4)
 				{
 					jogadaTorre(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 5)
 				{
 					jogadaDama(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 6)
 				{
 					jogadaRei(jogador.linhaDe,jogador.colunaDe,tab);
-					x++;
+					verifTab = verificaTabuleiro(tab,tabMod);
+					if(verifTab == 1){
+						x++;
+					}else{
+						printf("> Escolha outra peça: \n");
+					}
 				}
 			}
 		}
 		x=0;
-		
+		//system("cls");
 		printTabuleiro(tab);
 		
 	}
