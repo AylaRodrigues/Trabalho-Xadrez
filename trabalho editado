@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
+#include <windows.h>
 
 #define PEAO    1
 #define CAVALO  2
@@ -38,7 +40,8 @@ Jogada CriaJogada(int deLinha, int deColuna, int paraLinha, int paraColuna){
 void DesenhaTabuleiro(int tab[8][8]){
     int i,j;
     system("cls");
-
+	Sleep(500);
+	
     printf("    +---+---+---+---+---+---+---+---+\n");
     for (i=7;i>=0;i--){
         printf("%d   |",i+1);
@@ -54,7 +57,7 @@ void DesenhaTabuleiro(int tab[8][8]){
     }
     printf("      1   2   3   4   5   6   7   8 \n");
     
-    printf("\n\n negativo=pretas; positivo=brancas\n 1=peao; 2=cavalo; 3=bispo;\n 4=torre; 5=dama; 6=rei;\n\n");
+    printf("\n\n Negativo = pretas; Positivo = brancas\n 1= Peão; 2= Cavalo; 3= Bispo;\n 4= Torre; 5= Dama; 6= Rei;\n\n");
 }
 
 int CalculaPeao(int tab[8][8],int linha,int coluna,Jogada jogs[]){
@@ -258,12 +261,12 @@ void IniciaTabuleiro(int tab[8][8]){
 
 void EscolhePeca(int tab[8][8],int *linha, int *coluna){
     do{
-        printf("Digite a linha e a coluna da peca a ser movida:");
+        printf("Digite a linha e a coluna da peça a ser movida:\n");
         scanf("%d %d",linha,coluna); //lê valores de 1 a 8
         (*linha)--; //converte para valores de 0 a 7
         (*coluna)--;
         if (tab[*linha][*coluna]==0){
-            printf(">Essa peça nao eh sua ou nao ha peça nessa casa, por favor escolha outra!!!\n");
+            printf(">Essa peça não é sua ou não há peça nessa casa, por favor escolha outra!!!\n");
         }
     }while (tab[*linha][*coluna]==0);
 }
@@ -271,20 +274,20 @@ void EscolhePeca(int tab[8][8],int *linha, int *coluna){
 int CalculaJogadas(int tab[8][8],int linha, int coluna, Jogada jogs[]){
     int aux, peca = tab[linha][coluna];
     switch (abs(peca)){
-    case PEAO:   printf("\n> Voce escolheu o peao.\n");
+    case PEAO:   printf("\n> Você escolheu o peão.\n");
                  return CalculaPeao(tab,linha,coluna,jogs);break;//peoes
-    case CAVALO: printf("Voce escolheu o cavalo.\n");
+    case CAVALO: printf("\n>Você escolheu o cavalo.\n");
                  return CalculaCavalo(tab,linha,coluna,jogs);break;//cavalos
-    case BISPO:  printf("Voce escolheu o bispo.\n");
+    case BISPO:  printf("\n>Você escolheu o bispo.\n");
                  return CalculaBispo(tab,linha,coluna,jogs);break;//bispos
-    case TORRE:  printf("Voce escolheu a torre.\n");
+    case TORRE:  printf("\n>Você escolheu a torre.\n");
                  return CalculaTorre(tab,linha,coluna,jogs);break;//torres
-    case RAINHA: printf("Voce escolheu a rainha.\n");
+    case RAINHA: printf("\n>Você escolheu a dama.\n");
                  aux = CalculaBispo(tab,linha,coluna,jogs);
                  aux += CalculaTorre(tab,linha,coluna,&jogs[aux]);
                  return aux;
                  break;
-    case REI:    printf("Voce escolheu o rei.\n");
+    case REI:    printf("\n>Você escolheu o rei.\n");
                  return CalculaRei(tab,linha,coluna,jogs);break;//rei
     }
 }
@@ -293,11 +296,11 @@ int EscolheJogada(int qtd, Jogada jogs[]){
     int i,j,op;
     do{
         for (i=0;i<qtd;i++){
-            printf("Opcao de jogada %2d: mover para linha %d coluna %d\n",i+1,jogs[i].paraLinha+1,jogs[i].paraColuna+1);
+            printf("> Opção de jogada %2d: mover para linha %d coluna %d\n",i+1,jogs[i].paraLinha+1,jogs[i].paraColuna+1);
             if ( (i+1) % 3 == 0)
                 printf("\n");
         }
-        printf("> Escolha uma das opcoes(digite o numero):\n");
+        printf("\n> Escolha uma das opções(digite o número):\n");
         scanf("%d",&op);
     }while (op<1 || op>qtd);
     return op;
@@ -317,6 +320,8 @@ int ExecutaJogada(int tab[8][8],Jogada jog){
 }
 
 int main(){
+	
+	setlocale(LC_ALL,"");
     int tab[8][8];
     int vencedor=0,linha,coluna,escolha;
     int qtdJogadas;
@@ -329,7 +334,6 @@ int main(){
     
     if(strcmp(iniciar,"iniciar") ==0){
         system("cls");
-        //IniciaTabuleiro(tab);
         IniciaTabuleiro(tab);
     }
 
@@ -340,7 +344,7 @@ int main(){
         if (qtdJogadas>0){
             escolha = EscolheJogada(qtdJogadas,jogadas);
             vencedor = ExecutaJogada(tab,jogadas[escolha-1]);
-        }else printf("> Nao ha jogadas disponiveis para essa peca.");
+        }else printf("> Não há jogadas disponíveis para essa peça.");
     }
     if (vencedor>0){
         printf("As brancas venceram!");
