@@ -1,0 +1,350 @@
+//Ayla Rodrigues e Douglas Mareli
+//Eu vencerei Beth Harmon
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+#define PEAO    1
+#define CAVALO  2
+#define BISPO   3
+#define TORRE   4
+#define RAINHA  5
+#define REI     6
+
+typedef struct{
+    int deLinha,deColuna,paraLinha,paraColuna;
+}Jogada;
+
+void ResetCor(){
+    printf("\033[0m");
+}
+
+void AjustaCor(int peca){
+    switch(abs(peca)){
+    case PEAO: printf("\033[0;36m");break;
+    case CAVALO: printf("\033[1;33m");break;
+    case BISPO: printf("\033[0;35m");break;
+    case TORRE: printf("\033[0;32m");break;
+    case RAINHA: printf("\033[0;34m");break;
+    case REI: printf("\033[1;31m");break;
+    }
+}
+
+Jogada CriaJogada(int deLinha, int deColuna, int paraLinha, int paraColuna){
+    Jogada jog = {deLinha,deColuna,paraLinha,paraColuna};
+    return jog;
+}
+
+void DesenhaTabuleiro(int tab[8][8]){
+    int i,j;
+    system("cls");
+
+    printf("    +---+---+---+---+---+---+---+---+\n");
+    for (i=7;i>=0;i--){
+        printf("%d   |",i+1);
+        for (j=0;j<8;j++){
+            AjustaCor(tab[i][j]);
+            if (tab[i][j]>=0)
+                printf(" %d",tab[i][j]);
+            else printf("%d",tab[i][j]);
+            ResetCor();
+            printf(" |");
+        }
+        printf("\n    +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("      1   2   3   4   5   6   7   8 \n");
+    
+    printf("\n\n negativo=pretas; positivo=brancas\n 1=peão; 2=cavalo; 3=bispo;\n 4=torre; 5=dama; 6=rei;\n\n");
+}
+
+int CalculaPeao(int tab[8][8],int linha,int coluna,Jogada jogs[]){
+    Jogada jogada;
+    int qtd = 0, peca = tab[linha][coluna];
+
+
+    if (linha+peca>=0 && linha+peca<=7){//não está na primeira nem na última linha
+        if (tab[linha+peca][coluna]==0){ //pode avancar
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna); qtd++;
+        }
+        if (coluna>0 && tab[linha+peca][coluna-1]*peca<0){ //verificar captura na esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna-1); qtd++;
+        }
+        if (coluna<7 && tab[linha+peca][coluna+1]*peca<0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna+1); qtd++;
+        }
+    }
+    return qtd;
+}
+
+int CalculaCavalo(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd=0,peca = tab[linha][coluna];
+
+    if (linha<6){ //duas linhas acima
+        if (coluna<7 && tab[linha+2][coluna+1]*peca<=0){ //direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+2,coluna+1); qtd++;
+        }
+        if (coluna>0 && tab[linha+2][coluna-1]*peca<=0){ //esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+2,coluna-1); qtd++;
+        }
+    }
+    if (linha<7){//uma linha acima
+        if (coluna<6 && tab[linha+1][coluna+2]*peca<=0){ //duas casas à direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna+2); qtd++;
+        }
+        if (coluna>1 && tab[linha+1][coluna-2]*peca<=0){ //duas casas à esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna-2); qtd++;
+        }
+    }
+    if (linha>1){ //duas linhas abaixo
+        if (coluna<7 && tab[linha-2][coluna+1]*peca<=0){ //direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-2,coluna+1); qtd++;
+        }
+        if (coluna>0 && tab[linha-2][coluna-1]*peca<=0){ //esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha-2,coluna-1); qtd++;
+        }
+    }
+    if (linha>0){//uma linha abaixo
+        if (coluna<6 && tab[linha-1][coluna+2]*peca<=0){ //duas casas à direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna+2); qtd++;
+        }
+        if (coluna>1 && tab[linha-1][coluna-2]*peca<=0){ //duas casas à esquerd
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna-2); qtd++;
+        }
+    }
+    return qtd;
+}
+
+int CalculaBispo(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd = 0,peca = tab[linha][coluna];
+
+    int k=0;
+
+    do{//diagonal superior direita
+        k++;
+        if (linha+k<8 && coluna+k<8 && tab[linha+k][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna+k); qtd++;
+        }
+    }while (linha+k<8 && coluna+k<8 && tab[linha+k][coluna+k]==0);
+
+    k=0;
+    do{//diagonal superior esquerda
+        k++;
+        if (linha+k<8 && coluna-k>=0 && tab[linha+k][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna-k); qtd++;
+        }
+    }while (linha+k<8 && coluna-k>=0 && tab[linha+k][coluna-k]==0);
+
+    k=0;
+    do{//diagonal inferior direita
+        k++;
+        if (linha-k>=0 && coluna+k<8 && tab[linha-k][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna+k); qtd++;
+        }
+    }while (linha-k>=0 && coluna+k<8 && tab[linha-k][coluna+k]==0);
+
+    k=0;
+    do{//diagonal inferior direita
+        k++;
+        if (linha-k>=0 && coluna-k>=0 && tab[linha-k][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna-k); qtd++;
+        }
+    }while (linha-k>=0 && coluna+k>=0 && tab[linha-k][coluna-k]==0);
+
+    return qtd;
+}
+
+int CalculaTorre(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd = 0, peca=tab[linha][coluna];
+
+    int k=0;
+
+    do{//coluna acima
+        k++;
+        if (linha+k<8 && tab[linha+k][coluna]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna); qtd++;
+        }
+    }while(linha+k<8 && tab[linha+k][coluna]==0);
+
+    k=0;
+    do{//coluna abaixo
+        k++;
+        if (linha-k>=0 && tab[linha-k][coluna]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna); qtd++;
+        }
+    }while(linha-k>=0 && tab[linha-k][coluna]==0);
+
+    k=0;
+    do{//linha direita
+        k++;
+        if (coluna+k<8 && tab[linha][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha,coluna+k); qtd++;
+        }
+    }while(coluna+k<8 && tab[linha][coluna+k]==0);
+
+    k=0;
+    do{//linha esquerda
+        k++;
+        if (coluna-k>=0 && tab[linha][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha,coluna-k); qtd++;
+        }
+    }while(coluna-k>=0 && tab[linha][coluna-k]==0);
+
+    return qtd;
+}
+
+int CalculaRei(int tab[8][8], int linha, int coluna,Jogada jogs[]){
+    int qtd = 0, peca=tab[linha][coluna];
+
+    if (linha<7){//linha de cima
+        if (tab[linha+1][coluna]*peca<=0){//mesma coluna
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna); qtd++;
+        }
+        if (coluna<7 && tab[linha+1][coluna+1]*peca<=0){//superior direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna+1); qtd++;
+        }
+        if (coluna>=0 && tab[linha+1][coluna-1]*peca<=0){//superior esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna-1); qtd++;
+        }
+    }
+
+    if (linha>0){//linha de baixo
+        if (tab[linha-1][coluna]*peca<=0){//mesma coluna
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna); qtd++;
+        }
+        if (coluna<7 && tab[linha-1][coluna+1]*peca<=0){//inferior direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna+1); qtd++;
+        }
+        if (coluna>=0 && tab[linha-1][coluna-1]*peca<=0){//inferior esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna-1); qtd++;
+        }
+    }
+
+    if (coluna<7 && tab[linha][coluna+1]*peca<=0){ //mesma linha, casa da direita
+        jogs[qtd] = CriaJogada(linha,coluna,linha,coluna+1); qtd++;
+    }
+
+    if (coluna>0 && tab[linha][coluna-1]*peca<=0){ //mesma linha, casa da esquerda
+        jogs[qtd] = CriaJogada(linha,coluna,linha,coluna-1); qtd++;
+    }
+
+    return qtd;
+}
+
+void IniciaTabuleiro(int tab[8][8]){
+    int i,j;
+    for (i=0;i<8;i++)
+        for (j=0;j<8;j++)
+            if (i==1)
+                tab[i][j]=PEAO;//peões branco
+            else if (i==6)
+                tab[i][j]=-PEAO;//peões preto
+            else tab[i][j]=0;//outras casas
+
+    tab[0][0] = tab[0][7] = TORRE; //torres brancas
+    tab[7][0] = tab[7][7] = -TORRE;//torres pretas
+
+    tab[0][1] = tab[0][6] = CAVALO; //cavalos brancos
+    tab[7][1] = tab[7][6] = -CAVALO;//cavalos pretos
+
+    tab[0][2] = tab[0][5] = BISPO;//bispos brancos
+    tab[7][2] = tab[7][5] = -BISPO;//bispos pretos
+
+    tab[0][3] = RAINHA;//rainha branca
+    tab[0][4] = REI;//rei branco
+
+    tab[7][3] = -RAINHA;//rainha preta
+    tab[7][4] = -REI;//rei preto
+}
+
+void EscolhePeca(int tab[8][8],int *linha, int *coluna){
+    do{
+        printf("Digite a linha e a coluna da peca a ser movida:");
+        scanf("%d %d",linha,coluna); //lê valores de 1 a 8
+        (*linha)--; //converte para valores de 0 a 7
+        (*coluna)--;
+        if (tab[*linha][*coluna]==0){
+            printf(">Essa peça não é sua ou não há peça nessa casa, por favor escolha outra!!!\n");
+        }
+    }while (tab[*linha][*coluna]==0);
+}
+
+int CalculaJogadas(int tab[8][8],int linha, int coluna, Jogada jogs[]){
+    int aux, peca = tab[linha][coluna];
+    switch (abs(peca)){
+    case PEAO:   printf("\n> Você escolheu o peão.\n");
+                 return CalculaPeao(tab,linha,coluna,jogs);break;//peoes
+    case CAVALO: printf("Você escolheu o cavalo.\n");
+                 return CalculaCavalo(tab,linha,coluna,jogs);break;//cavalos
+    case BISPO:  printf("Você escolheu o bispo.\n");
+                 return CalculaBispo(tab,linha,coluna,jogs);break;//bispos
+    case TORRE:  printf("Você escolheu a torre.\n");
+                 return CalculaTorre(tab,linha,coluna,jogs);break;//torres
+    case RAINHA: printf("Você escolheu a rainha.\n");
+                 aux = CalculaBispo(tab,linha,coluna,jogs);
+                 aux += CalculaTorre(tab,linha,coluna,&jogs[aux]);
+                 return aux;
+                 break;
+    case REI:    printf("Você escolheu o rei.\n");
+                 return CalculaRei(tab,linha,coluna,jogs);break;//rei
+    }
+}
+
+int EscolheJogada(int qtd, Jogada jogs[]){
+    int i,j,op;
+    do{
+        for (i=0;i<qtd;i++){
+            printf("Jogada %2d: mover para linha %d coluna %d |",i+1,jogs[i].paraLinha+1,jogs[i].paraColuna+1);
+            if ( (i+1) % 3 == 0)
+                printf("\n");
+        }
+        printf("\nJogada:");
+        scanf("%d",&op);
+    }while (op<1 || op>qtd);
+    return op;
+}
+
+int ExecutaJogada(int tab[8][8],Jogada jog){
+    int resp=0, peca = tab[jog.deLinha][jog.deColuna];
+
+    tab[jog.deLinha][jog.deColuna] = 0; //tira a peça
+
+    if (abs(tab[jog.paraLinha][jog.paraColuna])==REI) //verifica se o rei adversário será capturado
+        resp = peca; //resp indica quem será vencedor
+
+    tab[jog.paraLinha][jog.paraColuna] = peca; //coloca a peça na nova posição
+
+    return resp;
+}
+
+int main(){
+    int tab[8][8];
+    int vencedor=0,linha,coluna,escolha;
+    int qtdJogadas;
+    char iniciar[10];
+    Jogada jogadas[30];
+
+    printf("---------- Bem vindo! ----------\n");
+    printf("> Pronto para vencer Beth Harmon?\n\n\nDigite iniciar para gerar o tabuleiro!\n");
+    scanf("%s",iniciar);
+    
+    if(strcmp(iniciar,"iniciar") ==0){
+        system("cls");
+        //IniciaTabuleiro(tab);
+        IniciaTabuleiro(tab);
+    }
+
+    while (vencedor==0){
+        DesenhaTabuleiro(tab);
+        EscolhePeca(tab,&linha,&coluna);
+        qtdJogadas = CalculaJogadas(tab,linha,coluna,jogadas);
+        if (qtdJogadas>0){
+            escolha = EscolheJogada(qtdJogadas,jogadas);
+            vencedor = ExecutaJogada(tab,jogadas[escolha-1]);
+        }else printf("Nao ha jogadas disponiveis!");
+    }
+    if (vencedor>0){
+        printf("As brancas venceram!");
+    }else printf("As pretas venceram!");
+}
