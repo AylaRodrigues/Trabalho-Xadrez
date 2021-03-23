@@ -6,1294 +6,362 @@
 #include <locale.h>
 #include <windows.h>
 
-struct jogada{
-	int linhaDe,colunaDe,linhaPara,colunaPara;
-};
-//para botar as peças na posição inical, foi feito um laço com uma serie de condições que colocam cada peça no seu devido lugar
-int IniciaTabuleiro(int tab[8][8]){
-	 
-	for(int i = 0; i <  8; i++)
-	{
-		for(int j = 0; j <  8; j++)
-		{
-			if((i==0 && j==0) || (i==0 && j==7)){
-				tab[i][j] = -4;	
-			}else if((i==0 && j==1) || (i==0 && j==6)){
-				tab[i][j] = -2;
-			}else if((i==0 && j==2) || (i==0 && j==5)){
-				tab[i][j] = -3;
-			}else if(i==0 && j ==3){
-				tab[i][j] = -5;
-			}else if(i==0 && j==4){
-				tab[i][j] = -6;
-			}else if(i==1){
-				tab[i][j] = -1;
-			}else if(i==6){
-				tab[i][j] = 1;
-			}else if((i==7 && j==0) || (i==7 && j==7)){
-				tab[i][j] = 4;	
-			}else if((i==7 && j==1) || (i==7 && j==6)){
-				tab[i][j] = 2;
-			}else if((i==7 && j==2) || (i==7 && j==5)){
-				tab[i][j] = 3;
-			}else if(i==7 && j ==3){
-				tab[i][j] = 5;
-			}else if(i==7 && j==4){
-				tab[i][j] = 6;
-			}else{
-				tab[i][j] = 0;
-			}
-		}
-	}
-	
+#define PEAO    1
+#define CAVALO  2
+#define BISPO   3
+#define TORRE   4
+#define RAINHA  5
+#define REI     6
+
+typedef struct{
+    int deLinha,deColuna,paraLinha,paraColuna;
+}Jogada;
+
+typedef struct{
+	int codigo,linha,coluna,ataques;
+	struct Peca *prox,*ant;
+}Peca;
+
+typedef struct{
+	int qtdBrancas;
+	struct Peca *brancas;
+	int qtdPretas;
+	struct Peca *pretas;
+	int jogVez;
+	struct Peca *tab[8][8];
+}Posicao;
+
+void ResetCor(){
+    printf("\033[0m");
 }
 
-int printTabuleiro(int tab[8][8]){
-	//printf("     ----------------------------------------\n");
-	for(int i =0; i<8; i++)
-	{
-		printf("%d    |", i);
-		for(int j=0; j<8; j++)
-		{
-			if(tab[i][j] >= 0 ){
-				printf("  %d  |",tab[i][j]);
-			}else{
-				printf(" %d  |",tab[i][j]);
-			}
-		}
-		if(i<7){
-			printf("\n     |-----|-----|-----|-----|-----|-----|-----|-----|\n");
-		}
-	}
-	printf("\n\n     ");
-	for(int i =0; i<8; i++)
-	{
-		printf("   %d  ",i);
-	}
-	printf("\n\n\n Negativo = pretas; Positivo = bBancas\n 1 = peão;  2 = cavalo; 3 = bispo;\n 4 = torre; 5 = dama;   6 = rei;\n\n");
+void AjustaCor(int peca){
+    switch(abs(peca)){
+    case PEAO: printf("\033[0;36m");break;
+    case CAVALO: printf("\033[1;33m");break;
+    case BISPO: printf("\033[0;35m");break;
+    case TORRE: printf("\033[0;32m");break;
+    case RAINHA: printf("\033[0;34m");break;
+    case REI: printf("\033[1;31m");break;
+    }
 }
 
-//verifica se houve alteração no tabuleiro (Se houve movimentação de alguma peça)
-int verificaTabuleiro(int tab_1[8][8], int tab_2[8][8]){
-	int ct =0;
-	int reis =0; //variável para verificar quantos reis tem no tabuleiro (se só houver um, fim de jogo).
-	int qlRei; // variável para verificar qual rei ainda está no jogo.
-	for(int i = 0; i<8; i++)
-	{
-		for(int j = 0; j<8; j++)
-		{
-			if(tab_1[i][j] == tab_2[i][j])
-			{
-				ct++;
-			}
-		}
-	}
-	
-	if(ct == 64){
-		return 0;
-	}else{
-		for(int i = 0; i<8; i++)
-		{
-			for(int j = 0; j<8; j++)
-			{
-				tab_2[i][j] = tab_1[i][j];	
-				if(tab_1[i][j]==6 || tab_1[i][j]==-6){
-					reis++;
-					qlRei = tab_1[i][j];
-				}
-			}
-		}
-		if(reis == 2){
-			return 1;
-		}else{
-			if(qlRei==6){
-				return 2;
-			}else if(qlRei== -6){
-				return 3;
-			}
-		}
-	}
-	
+Jogada CriaJogada(int deLinha, int deColuna, int paraLinha, int paraColuna){
+    Jogada jog = {deLinha,deColuna,paraLinha,paraColuna};
+    return jog;
 }
 
-//para modificar o tabuleiro de acordo com a jgoada escolhida
-int jogadaEscolhida(int tab[8][8], struct jogada *peca, int numPeca){ 
+void DesenhaTabuleiro(int tab[8][8]){
+    int i,j;
+    system("cls");
+	Sleep(500);
 	
-		for(int i = 0; i<8; i++){
-			for(int j = 0; j<8; j++){
-				if(i==(*peca).linhaDe && j==(*peca).colunaDe){
-					tab[i][j]= 0;
-				}
-				if(i==(*peca).linhaPara && j==(*peca).colunaPara){
-					tab[i][j]= numPeca;
-				}
-			}
-		}
+    printf("    +---+---+---+---+---+---+---+---+\n");
+    for (i=7;i>=0;i--){
+        printf("%d   |",i+1);
+        for (j=0;j<8;j++){
+            AjustaCor(tab[i][j]);
+            if (tab[i][j]>=0)
+                printf(" %d",tab[i][j]);
+            else printf("%d",tab[i][j]);
+            ResetCor();
+            printf(" |");
+        }
+        printf("\n    +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("      1   2   3   4   5   6   7   8 \n");
+    
+    printf("\n\n Negativo = pretas; Positivo = brancas\n 1= Peão; 2= Cavalo; 3= Bispo;\n 4= Torre; 5= Dama; 6= Rei;\n\n");
 }
 
-int jogadaPeao(int linha, int coluna, int tab[8][8]){
+int CalculaPeao(int tab[8][8],int linha,int coluna,Jogada jogs[]){
+    Jogada jogada;
+    int qtd = 0, peca = tab[linha][coluna];
 
-	struct jogada peao[3];
-	int ct = 0; // contador para o indice do vetor
-	int escolhida;
-	int numPeca; // variavel que indica o numero representante da peça no tabuleiro (sera passada para a funcção jogadaEscolhida)
-	
-	printf("\n> Você escolheu o peão.\n");
-	
-	if(tab[linha][coluna] > 0) //peça branca
-	{ 
-		numPeca = 1;
-		if(linha-1>=0 && tab[linha-1][coluna] == 0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna;
-			peao[ct].linhaPara = linha -1;
-			ct++;
-		}
-		if(linha-1>= 0 && tab[linha-1][coluna+1]<0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna +1;
-			peao[ct].linhaPara = linha -1;
-			ct++;
-		}
-		if(linha-1>= 0 && tab[linha-1][coluna-1]<0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna -1;
-			peao[ct].linhaPara = linha -1;
-			ct++;
-		}
-	}else //peça preta
-	{ 
-		numPeca = -1;
-		if(linha+1<= 7 && tab[linha+1][coluna] == 0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna;
-			peao[ct].linhaPara = linha +1;
-			ct++;
-		}
-		if(coluna+1 <= 7 && tab[linha+1][coluna+1]>0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna +1;
-			peao[ct].linhaPara = linha +1;
-			ct++;
-		}
-		if(coluna+1 <= 7 && tab[linha+1][coluna-1]>0){
-			peao[ct].colunaDe = coluna;
-			peao[ct].linhaDe = linha;
-			peao[ct].colunaPara = coluna -1;
-			peao[ct].linhaPara = linha +1;
-			ct++;
-		}
-	}
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: peão de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", peao[i].linhaPara,peao[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;	
-		jogadaEscolhida(tab,&peao[escolhida],numPeca);
-	}
+
+    if (linha+peca>=0 && linha+peca<=7){//não está na primeira nem na última linha
+        if (tab[linha+peca][coluna]==0){ //pode avancar
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna); qtd++;
+        }
+        if (coluna>0 && tab[linha+peca][coluna-1]*peca<0){ //verificar captura na esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna-1); qtd++;
+        }
+        if (coluna<7 && tab[linha+peca][coluna+1]*peca<0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+peca,coluna+1); qtd++;
+        }
+    }
+    return qtd;
 }
 
-int jogadaTorre(int linha, int coluna, int tab[8][8]){
-	
-	struct jogada torre[14];
-	int ct = 0; //contador para o indice do vetor
-	int escolhida;
-	int numPeca;
-	
-	printf("\n> Você escolheu a torre.\n");
-	
-	if(tab[linha][coluna]>0) //peça branca
-	{
-			numPeca = 4;
-		for(int i = linha; i>=0; i--) //torre avança
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].colunaPara = coluna;
-			
-			if(i-1>=0 && tab[i-1][coluna] == 0){
-				torre[ct].linhaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[i-1][coluna] < 0){
-				torre[ct].linhaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[i-1][coluna] > 0){
-				break;
-			}
-		}
-		for(int i = linha; i<=7; i++) //torre recua
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].colunaPara = coluna;
-			
-			if(i+1<=7 && tab[i+1][coluna] == 0){
-				torre[ct].linhaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[i+1][coluna] < 0){
-				torre[ct].linhaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[i+1][coluna] > 0){
-				break;
-			}	
-		}
-		for(int i = coluna; i<=7; i++) //torre para direita
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].linhaPara = linha;
-			
-			if(i+1<=7 && tab[linha][i+1] == 0){
-				torre[ct].colunaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[linha][i+1] < 0){
-				torre[ct].colunaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[linha][i+1] > 0){
-				break;
-			}		
-		}
-		for(int i = coluna; i>=0; i--) //torre para esquerda
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].linhaPara = linha;
-			
-			if(i-1>=0 && tab[linha][i-1] == 0){
-				torre[ct].colunaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[linha][i-1]<0){
-				torre[ct].colunaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[linha][i]>0){
-				break;
-			}		
-		}
-	}else //peça preta
-	{
-		numPeca = -4;
-		for(int i = linha; i>=0; i--) //torre recua
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].colunaPara = coluna;
-			
-			if(i-1>=0 && tab[i-1][coluna] == 0){
-				torre[ct].linhaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[i-1][coluna] > 0){
-				torre[ct].linhaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[i-1][coluna] < 0){
-				break;
-			}	
-		}
-		for(int i = linha; i<=7; i++) //torre avança
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].colunaPara = coluna;
-			
-			if(i+1<7 && tab[i+1][coluna] == 0){
-				torre[ct].linhaPara = i+1;
-				ct++;
-			}else if(i+1<7 && tab[i+1][coluna] > 0){
-				torre[ct].linhaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[i+1][coluna] < 0){
-				break;
-			}		
-		}
-		for(int i = coluna; i<=7; i++) //torre para direita
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].linhaPara = linha;
-			
-			if(i+1<=7 && tab[linha][i+1] == 0){
-				torre[ct].colunaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[linha][i] > 0){
-				torre[ct].colunaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[linha][i+1] < 0){
-				break;
-			}		
-		}
-		for(int i = coluna; i>=0; i--) //torre para esquerda
-		{
-			torre[ct].colunaDe = coluna;
-			torre[ct].linhaDe = linha;
-			torre[ct].linhaPara = linha;
-			
-			if(i-1>=0 && tab[linha][i-1] == 0){
-				torre[ct].colunaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[linha][i-1] > 0){
-				torre[ct].colunaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[linha][i-1] < 0){
-				break;
-			}		
-		}
-	}
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: torre de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", torre[i].linhaPara,torre[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;
-		jogadaEscolhida(tab,&torre[escolhida],numPeca);
-	}
+int CalculaCavalo(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd=0,peca = tab[linha][coluna];
+
+    if (linha<6){ //duas linhas acima
+        if (coluna<7 && tab[linha+2][coluna+1]*peca<=0){ //direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+2,coluna+1); qtd++;
+        }
+        if (coluna>0 && tab[linha+2][coluna-1]*peca<=0){ //esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+2,coluna-1); qtd++;
+        }
+    }
+    if (linha<7){//uma linha acima
+        if (coluna<6 && tab[linha+1][coluna+2]*peca<=0){ //duas casas à direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna+2); qtd++;
+        }
+        if (coluna>1 && tab[linha+1][coluna-2]*peca<=0){ //duas casas à esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna-2); qtd++;
+        }
+    }
+    if (linha>1){ //duas linhas abaixo
+        if (coluna<7 && tab[linha-2][coluna+1]*peca<=0){ //direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-2,coluna+1); qtd++;
+        }
+        if (coluna>0 && tab[linha-2][coluna-1]*peca<=0){ //esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha-2,coluna-1); qtd++;
+        }
+    }
+    if (linha>0){//uma linha abaixo
+        if (coluna<6 && tab[linha-1][coluna+2]*peca<=0){ //duas casas à direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna+2); qtd++;
+        }
+        if (coluna>1 && tab[linha-1][coluna-2]*peca<=0){ //duas casas à esquerd
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna-2); qtd++;
+        }
+    }
+    return qtd;
 }
 
-int jogadaCavalo(int linha, int coluna, int tab[8][8]){
-	
-	struct jogada cavalo[8];
-	int ct=0;
-	int escolhida;
-	int numPeca;
-	printf("\n> Você escolheu o cavalo.\n");
-	
-	if(tab[linha][coluna] > 0) //peça branca
-	{ 
-		numPeca = 2;
-		if(linha-2>=0 && coluna+1<=7 && tab[linha-2][coluna+1]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-2;
-			cavalo[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha-2>=0 && coluna -1>=0 && tab[linha-2][coluna-1]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-2;
-			cavalo[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha+2<=7 && coluna-1>=0 && tab[linha+2][coluna-1]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+2;
-			cavalo[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha+2<=7 && coluna+1<=7 && tab[linha+2][coluna+1]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+2;
-			cavalo[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha+1<=7 && coluna+2<=7 && tab[linha+1][coluna+2]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+1;
-			cavalo[ct].colunaPara = coluna+2;
-			ct++;
-		}
-		if(linha+1<=7 && coluna-2>=0 && tab[linha+1][coluna-2]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+1;
-			cavalo[ct].colunaPara = coluna-2;
-			ct++;
-		}
-		if(linha-1>=0 && coluna+2<=7 && tab[linha-1][coluna+2]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-1;
-			cavalo[ct].colunaPara = coluna+2;
-			ct++;
-		}
-		if(linha-1>=0 && coluna-2>=0 && tab[linha-1][coluna-2]<=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-1;
-			cavalo[ct].colunaPara = coluna-2;
-			ct++;
-		}
-	}else // peca preta
-	{
-		numPeca = -2;
-		if(linha-2>=0 && coluna+1<=7 && tab[linha-2][coluna+1]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-2;
-			cavalo[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha-2>=0 && coluna-1>=0 && tab[linha-2][coluna-1]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-2;
-			cavalo[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha+2<=7 && coluna-1>=0 && tab[linha+2][coluna-1]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+2;
-			cavalo[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha+2<=7 && coluna+1<=7 && tab[linha+2][coluna+1]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+2;
-			cavalo[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha+1<=7 && coluna+2<=7 && tab[linha+1][coluna+2]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+1;
-			cavalo[ct].colunaPara = coluna+2;
-			ct++;
-		}
-		if(linha+1<=7 && coluna-2>=0 && tab[linha+1][coluna-2]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha+1;
-			cavalo[ct].colunaPara = coluna-2;
-			ct++;
-		}
-		if(linha-1>=0 && coluna+2<=7 && tab[linha-1][coluna+2]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-1;
-			cavalo[ct].colunaPara = coluna+2;
-			ct++;
-		}
-		if(linha-1>=0 && coluna-2>=0 && tab[linha-1][coluna-2]>=0){
-			cavalo[ct].linhaDe = linha;
-			cavalo[ct].colunaDe = coluna;
-			cavalo[ct].linhaPara = linha-1;
-			cavalo[ct].colunaPara = coluna-2;
-			ct++;
-		}
-	}
-	
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: cavalo de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", cavalo[i].linhaPara,cavalo[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;
-		jogadaEscolhida(tab,&cavalo[escolhida],numPeca);
-	}
-	
+int CalculaBispo(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd = 0,peca = tab[linha][coluna];
+
+    int k=0;
+
+    do{//diagonal superior direita
+        k++;
+        if (linha+k<8 && coluna+k<8 && tab[linha+k][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna+k); qtd++;
+        }
+    }while (linha+k<8 && coluna+k<8 && tab[linha+k][coluna+k]==0);
+
+    k=0;
+    do{//diagonal superior esquerda
+        k++;
+        if (linha+k<8 && coluna-k>=0 && tab[linha+k][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna-k); qtd++;
+        }
+    }while (linha+k<8 && coluna-k>=0 && tab[linha+k][coluna-k]==0);
+
+    k=0;
+    do{//diagonal inferior direita
+        k++;
+        if (linha-k>=0 && coluna+k<8 && tab[linha-k][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna+k); qtd++;
+        }
+    }while (linha-k>=0 && coluna+k<8 && tab[linha-k][coluna+k]==0);
+
+    k=0;
+    do{//diagonal inferior direita
+        k++;
+        if (linha-k>=0 && coluna-k>=0 && tab[linha-k][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna-k); qtd++;
+        }
+    }while (linha-k>=0 && coluna+k>=0 && tab[linha-k][coluna-k]==0);
+
+    return qtd;
 }
 
-int jogadaBispo(int linha, int coluna, int tab[8][8]){
-	
-	struct jogada bispo[13];
-	int ct=0;
-	int escolhida;
-	int numPeca;
-	printf("\n> Você escolheu o bispo.\n");
-	
-	int j = coluna;
-	if(tab[linha][coluna] > 0) //peça branca
-	{
-		numPeca = 3;
-		for(int i = linha; i>=0; i--) //diagonal direita pra frente
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-			if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]==0)
-				{
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]<0){
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]>0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal esquerda pra frente
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]==0)
-				{
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]<0){
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]>0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal direita pra trás
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]==0)
-				{
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]<0){
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]>0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal esquerda pra trás
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i+1<=7 && j-1>=0 && tab[i+1][j-1]==0)
-				{
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]<0){
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]>0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-	}else //peca preta
-	{
-		numPeca = -3;
-		for(int i = linha; i<=7; i++) //diagonal esquerda pra frente
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i+1<=7 && j-1>=0 && tab[i+1][j-1]==0)
-				{
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]>0){
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]<0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal direita pra frente
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]==0)
-				{
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]>0){
-					bispo[ct].linhaPara = i+1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]<0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal esquerda pra trás
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-				if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]==0)
-				{
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]>0){
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]<0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal direita pra trás
-		{
-			bispo[ct].colunaDe = coluna;
-			bispo[ct].linhaDe = linha;
-			if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]==0)
-				{
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]>0){
-					bispo[ct].linhaPara = i-1;
-					bispo[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]<0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-	}
-	
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: bispo de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", bispo[i].linhaPara,bispo[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;
-		jogadaEscolhida(tab,&bispo[escolhida],numPeca);
-	}
+int CalculaTorre(int tab[8][8], int linha, int coluna, Jogada jogs[]){
+    int qtd = 0, peca=tab[linha][coluna];
+
+    int k=0;
+
+    do{//coluna acima
+        k++;
+        if (linha+k<8 && tab[linha+k][coluna]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha+k,coluna); qtd++;
+        }
+    }while(linha+k<8 && tab[linha+k][coluna]==0);
+
+    k=0;
+    do{//coluna abaixo
+        k++;
+        if (linha-k>=0 && tab[linha-k][coluna]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha-k,coluna); qtd++;
+        }
+    }while(linha-k>=0 && tab[linha-k][coluna]==0);
+
+    k=0;
+    do{//linha direita
+        k++;
+        if (coluna+k<8 && tab[linha][coluna+k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha,coluna+k); qtd++;
+        }
+    }while(coluna+k<8 && tab[linha][coluna+k]==0);
+
+    k=0;
+    do{//linha esquerda
+        k++;
+        if (coluna-k>=0 && tab[linha][coluna-k]*peca<=0){
+            jogs[qtd] = CriaJogada(linha,coluna,linha,coluna-k); qtd++;
+        }
+    }while(coluna-k>=0 && tab[linha][coluna-k]==0);
+
+    return qtd;
 }
 
-int jogadaDama(int linha, int coluna, int tab[8][8]){
-	
-	struct jogada dama[27];
-	int ct = 0; //contador para o indice do vetor
-	int escolhida;
-	int numPeca;
-	
-	printf("> Você escolheu a dama.\n");
-	
-	if(tab[linha][coluna]>0) //peça branca
-	{
-			numPeca = 5;
-		for(int i = linha; i>=0; i--) //dama avança
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].colunaPara = coluna;
-			
-			if(i-1>=0 && tab[i-1][coluna]==0){
-				dama[ct].linhaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[i-1][coluna]<0){
-				dama[ct].linhaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[i-1][coluna]>0){
-				break;
-			}
-		}
-		for(int i = linha; i<=7; i++) //dama recua
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].colunaPara = coluna;
-			
-			if(i+1<=7 && tab[i+1][coluna]==0){
-				dama[ct].linhaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[i+1][coluna]<0){
-				dama[ct].linhaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[i+1][coluna]>0){
-				break;
-			}	
-		}
-		for(int i = coluna; i<=7; i++) //dama para direita
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].linhaPara = linha;
-			
-			if(i+1<=7 && tab[linha][i+1]==0){
-				dama[ct].colunaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[linha][i+1]<0){
-				dama[ct].colunaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[linha][i+1]>0){
-				break;
-			}		
-		}
-		for(int i = coluna; i>=0; i--) //dama para esquerda
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].linhaPara = linha;
-			
-			if(i-1>=0 && tab[linha][i-1]==0){
-				dama[ct].colunaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[linha][i-1]<0){
-				dama[ct].colunaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[linha][i]>0){
-				break;
-			}		
-		}
-		int j = coluna;
-		for(int i = linha; i>=0; i--) //diagonal direita pra frente
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]==0)
-				{
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]<0){
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]>0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal esquerda pra frente
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]==0)
-				{
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]<0){
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]>0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal direita pra trás
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]==0)
-				{
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]<0){
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]>0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal esquerda pra trás
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i+1<=7 && j-1>=0 && tab[i+1][j-1]==0)
-				{
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]<0){
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]>0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		
-	}else //peça preta
-	{
-		numPeca = -5;
-		for(int i = linha; i>=0; i--) //dama recua
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].colunaPara = coluna;
-			
-			if(i-1>=0 && tab[i-1][coluna]==0){
-				dama[ct].linhaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[i-1][coluna]>0){
-				dama[ct].linhaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[i-1][coluna]<0){
-				break;
-			}	
-		}
-		for(int i = linha; i<=7; i++) //dama avança
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].colunaPara = coluna;
-			
-			if(i+1<7 && tab[i+1][coluna]==0){
-				dama[ct].linhaPara = i+1;
-				ct++;
-			}else if(i+1<7 && tab[i+1][coluna]>0){
-				dama[ct].linhaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[i+1][coluna]<0){
-				break;
-			}		
-		}
-		for(int i = coluna; i<=7; i++) //dama para direita
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].linhaPara = linha;
-			
-			if(i+1<=7 && tab[linha][i+1]==0){
-				dama[ct].colunaPara = i+1;
-				ct++;
-			}else if(i+1<=7 && tab[linha][i]>0){
-				dama[ct].colunaPara = i+1;
-				ct++;
-				break;
-			}else if(i+1<=7 && tab[linha][i+1]<0){
-				break;
-			}		
-		}
-		for(int i = coluna; i>=0; i--) //dama para esquerda
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			dama[ct].linhaPara = linha;
-			
-			if(i-1>=0 && tab[linha][i-1] == 0){
-				dama[ct].colunaPara = i-1;
-				ct++;
-			}else if(i-1>=0 && tab[linha][i-1]>0){
-				dama[ct].colunaPara = i-1;
-				ct++;
-				break;
-			}else if(i-1>=0 && tab[linha][i-1]<0){
-				break;
-			}		
-		}
-		int j = coluna;
-		for(int i = linha; i<=7; i++) //diagonal esquerda pra frente
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i+1<=7 && j-1>=0 && tab[i+1][j-1]==0)
-				{
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]>0){
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i+1<=7 && j-1>=0 && tab[i+1][j-1]<0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i<=7; i++) //diagonal direita pra frente
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]==0)
-				{
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]>0){
-					dama[ct].linhaPara = i+1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i+1<= 7 && j+1<=7 && tab[i+1][j+1]<0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal esquerda pra trás
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-				if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]==0)
-				{
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]>0){
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j-1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j-1>=0 && tab[i-1][j-1]<0){
-					break;
-				}
-			j--;
-		}
-		j=coluna;
-		for(int i = linha; i>=0; i--) //diagonal direita pra trás
-		{
-			dama[ct].colunaDe = coluna;
-			dama[ct].linhaDe = linha;
-			if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]==0)
-				{
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]>0){
-					dama[ct].linhaPara = i-1;
-					dama[ct].colunaPara = j+1;
-					ct++;
-					break;
-				}else if(i-1>= 0 && j+1<=7 && tab[i-1][j+1]<0){
-					break;
-				}
-			j++;
-		}
-		j=coluna;
-	}
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: dama de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", dama[i].linhaPara,dama[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;
-		jogadaEscolhida(tab,&dama[escolhida],numPeca);
-	}
-	
+int CalculaRei(int tab[8][8], int linha, int coluna,Jogada jogs[]){
+    int qtd = 0, peca=tab[linha][coluna];
+
+    if (linha<7){//linha de cima
+        if (tab[linha+1][coluna]*peca<=0){//mesma coluna
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna); qtd++;
+        }
+        if (coluna<7 && tab[linha+1][coluna+1]*peca<=0){//superior direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna+1); qtd++;
+        }
+        if (coluna>=0 && tab[linha+1][coluna-1]*peca<=0){//superior esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha+1,coluna-1); qtd++;
+        }
+    }
+
+    if (linha>0){//linha de baixo
+        if (tab[linha-1][coluna]*peca<=0){//mesma coluna
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna); qtd++;
+        }
+        if (coluna<7 && tab[linha-1][coluna+1]*peca<=0){//inferior direita
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna+1); qtd++;
+        }
+        if (coluna>=0 && tab[linha-1][coluna-1]*peca<=0){//inferior esquerda
+            jogs[qtd] = CriaJogada(linha,coluna,linha-1,coluna-1); qtd++;
+        }
+    }
+
+    if (coluna<7 && tab[linha][coluna+1]*peca<=0){ //mesma linha, casa da direita
+        jogs[qtd] = CriaJogada(linha,coluna,linha,coluna+1); qtd++;
+    }
+
+    if (coluna>0 && tab[linha][coluna-1]*peca<=0){ //mesma linha, casa da esquerda
+        jogs[qtd] = CriaJogada(linha,coluna,linha,coluna-1); qtd++;
+    }
+
+    return qtd;
 }
 
-int jogadaRei(int linha, int coluna, int tab[8][8]){
-	
-	struct jogada rei[8];
-	int ct=0;
-	int escolhida;
-	int numPeca;
-	printf("> Você escolheu o rei.\n");
-	
-	if(tab[linha][coluna]>0) // peca branca
-	{
-		numPeca = 6;
-		if(linha+1<=7 && tab[linha+1][coluna]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna;
-			ct++;
-		}
-		if(linha-1>=0 && tab[linha-1][coluna]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna;
-			ct++;
-		}
-		if(linha+1<=7 && coluna+1<=7 && tab[linha+1][coluna+1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha+1<=7 && coluna-1>=0 && tab[linha+1][coluna-1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha-1>=0 && coluna+1<=7 && tab[linha-1][coluna+1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha-1>=0 && coluna-1>=0 && tab[linha-1][coluna-1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(coluna+1<=7 && tab[linha][coluna+1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(coluna-1>=0 && tab[linha][coluna-1]<=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-	}else
-	{
-		numPeca = -6;
-		if(linha+1<=7 && tab[linha+1][coluna]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna;
-			ct++;
-		}
-		if(linha-1>=0 && tab[linha-1][coluna]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna;
-			ct++;
-		}
-		if(linha+1<=7 && coluna+1<=7 && tab[linha+1][coluna+1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha+1<=7 && coluna-1>=0 && tab[linha+1][coluna-1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha+1;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(linha-1>=0 && coluna+1<=7 && tab[linha-1][coluna+1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(linha-1>=0 && coluna-1>=0 && tab[linha-1][coluna-1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha-1;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-		if(coluna+1<=7 && tab[linha][coluna+1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha;
-			rei[ct].colunaPara = coluna+1;
-			ct++;
-		}
-		if(coluna-1>=0 && tab[linha][coluna-1]>=0){
-			rei[ct].linhaDe = linha;
-			rei[ct].colunaDe = coluna;
-			rei[ct].linhaPara = linha;
-			rei[ct].colunaPara = coluna-1;
-			ct++;
-		}
-	}
-	
-	if(ct==0){
-			printf("> Não há jogadas para essa peça.\n");
-	}else{
-		for(int i =0; i<ct; i++){
-			printf(" Opção de jogada %d: rei de %d %d ",i+1,linha,coluna);
-			printf("para %d %d\n\n", rei[i].linhaPara,rei[i].colunaPara);
-		}
-		printf("> Escolha uma das opções(digite o numero):\n");
-		scanf("%d",&escolhida);
-		escolhida--;
-		jogadaEscolhida(tab,&rei[escolhida],numPeca);
-	}
-} 
+void IniciaTabuleiro(int tab[8][8]){
+    int i,j;
+    for (i=0;i<8;i++)
+        for (j=0;j<8;j++)
+            if (i==1)
+                tab[i][j]=PEAO;//peões branco
+            else if (i==6)
+                tab[i][j]=-PEAO;//peões preto
+            else tab[i][j]=0;//outras casas
+
+    tab[0][0] = tab[0][7] = TORRE; //torres brancas
+    tab[7][0] = tab[7][7] = -TORRE;//torres pretas
+
+    tab[0][1] = tab[0][6] = CAVALO; //cavalos brancos
+    tab[7][1] = tab[7][6] = -CAVALO;//cavalos pretos
+
+    tab[0][2] = tab[0][5] = BISPO;//bispos brancos
+    tab[7][2] = tab[7][5] = -BISPO;//bispos pretos
+
+    tab[0][3] = RAINHA;//rainha branca
+    tab[0][4] = REI;//rei branco
+
+    tab[7][3] = -RAINHA;//rainha preta
+    tab[7][4] = -REI;//rei preto
+}
+
+void EscolhePeca(int tab[8][8],int *linha, int *coluna){
+    do{
+        printf("Digite a linha e a coluna da peça a ser movida:\n");
+        scanf("%d %d",linha,coluna); //lê valores de 1 a 8
+        (*linha)--; //converte para valores de 0 a 7
+        (*coluna)--;
+        if (tab[*linha][*coluna]==0){
+            printf(">Essa peça não é sua ou não há peça nessa casa, por favor escolha outra!!!\n");
+        }
+    }while (tab[*linha][*coluna]==0);
+}
+
+int CalculaJogadas(int tab[8][8],int linha, int coluna, Jogada jogs[]){
+    int aux, peca = tab[linha][coluna];
+    switch (abs(peca)){
+    case PEAO:   printf("\n> Você escolheu o peão.\n");
+                 return CalculaPeao(tab,linha,coluna,jogs);break;//peoes
+    case CAVALO: printf("\n>Você escolheu o cavalo.\n");
+                 return CalculaCavalo(tab,linha,coluna,jogs);break;//cavalos
+    case BISPO:  printf("\n>Você escolheu o bispo.\n");
+                 return CalculaBispo(tab,linha,coluna,jogs);break;//bispos
+    case TORRE:  printf("\n>Você escolheu a torre.\n");
+                 return CalculaTorre(tab,linha,coluna,jogs);break;//torres
+    case RAINHA: printf("\n>Você escolheu a dama.\n");
+                 aux = CalculaBispo(tab,linha,coluna,jogs);
+                 aux += CalculaTorre(tab,linha,coluna,&jogs[aux]);
+                 return aux;
+                 break;
+    case REI:    printf("\n>Você escolheu o rei.\n");
+                 return CalculaRei(tab,linha,coluna,jogs);break;//rei
+    }
+}
+
+int EscolheJogada(int qtd, Jogada jogs[]){
+    int op;
+    do{
+        for (int i=0;i<qtd;i++){
+            printf("> Opção de jogada %2d: mover para linha %d coluna %d\n",i+1,jogs[i].paraLinha+1,jogs[i].paraColuna+1);
+            if ( (i+1) % 3 == 0){
+                printf("\n");
+            }
+        }
+        printf("\n> Escolha uma das opções(digite o número):\n");
+        scanf("%d",&op);
+    }while (op<1 || op>qtd);
+    return op;
+}
+
+int ExecutaJogada(int tab[8][8],Jogada jog){
+    int resp=0, peca = tab[jog.deLinha][jog.deColuna];
+
+    tab[jog.deLinha][jog.deColuna] = 0; //tira a peça
+
+    if (abs(tab[jog.paraLinha][jog.paraColuna])==REI) //verifica se o rei adversário será capturado
+        resp = peca; //resp indica quem será vencedor
+
+    tab[jog.paraLinha][jog.paraColuna] = peca; //coloca a peça na nova posição
+
+    return resp;
+}
 
 int main(){
 	
 	setlocale(LC_ALL,"");
-	
-	int tab[8][8];
-	int tabMod[8][8]; //tabuleiro que servira para verificar se houve uma jogada ou não
-	int jogo = 0; // variavel que dara continuidade ao jogo (enquanto o jogo estiver rolando, seu valor será 1, quando 0 o jogo para).
-	char iniciar[10];//varavel que servira de comando para iniciar o tabuleiro.
-	struct jogada jogador;
-	
-	printf("---------- Bem vindo! ----------\n");
-	printf("> Pronto para vencer Beth Harmon?\n\n\nDigite iniciar para gerar o tabuleiro!\n");
-	scanf("%s",iniciar);
-	
-	if(strcmp(iniciar,"iniciar") ==0){
-		system("cls");
-		IniciaTabuleiro(tab);
-		for(int i = 0; i<8; i++)
-		{
-			for(int j = 0; j<8; j++)
-			{
-				tabMod[i][j] = tab[i][j];	
-			}
-		}
-		printTabuleiro(tab);
-		jogo=1;
-	}
-	
-	int rodada = 0;// quando for impar = vez das brancas/ par = vez das pretas
-	int x= 0; // variável para caso o jogador escolha uma casa zerada (sem peça)
-	int verifTab; //variável para verificar se houve uma jogada ou não
-	
-	while(jogo == 1)
-	{
-		rodada++;
-		if(rodada%2 != 0){
-			printf("-----Vez das Brancas-----\n> Escolha uma peça para jogar(digite a linha e a coluna):\n");
-			
-			while(x==0){
-				scanf("%d %d",&jogador.linhaDe,&jogador.colunaDe);
-				if(tab[jogador.linhaDe][jogador.colunaDe] <= 0)
-				{
-					printf("> Essa peça não é sua ou não há peça nessa casa, por favor escolha outra: \n");
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 1)
-				{
-					jogadaPeao(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 2)
-				{
-					jogadaCavalo(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 3)
-				{
-					jogadaBispo(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 4)
-				{
-					jogadaTorre(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 5)
-				{
-					jogadaDama(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == 6)
-				{
-					jogadaRei(jogador.linhaDe,jogador.colunaDe,tab);
-				}
-				
-				verifTab = verificaTabuleiro(tab,tabMod);
-				if(verifTab == 0){
-					printf("> Escolha outra peça: \n");
-				}else{
-					x++;
-				}
-			}
-			
-		}else if(rodada%2 == 0){
-			printf("-----Vez das Pretas-----\n> Escolha uma peça para jogar(digite a linha e a coluna):\n");
-			
-			while(x==0){
-				scanf("%d %d",&jogador.linhaDe,&jogador.colunaDe);
-				if(tab[jogador.linhaDe][jogador.colunaDe] >= 0)
-				{
-					printf(">Essa peça não é sua ou não há peça nessa casa, por favor escolha outra: \n");
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -1)
-				{
-					jogadaPeao(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -2)
-				{
-					jogadaCavalo(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -3)
-				{
-					jogadaBispo(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -4)
-				{
-					jogadaTorre(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -5)
-				{
-					jogadaDama(jogador.linhaDe,jogador.colunaDe,tab);
-				}else if(tab[jogador.linhaDe][jogador.colunaDe] == -6)
-				{
-					jogadaRei(jogador.linhaDe,jogador.colunaDe,tab);
-				}
-				
-				verifTab = verificaTabuleiro(tab,tabMod);
-				if(verifTab == 0){
-					printf("> Escolha outra peça: \n");
-				}else{
-					x++;
-				}
-			}
-		}
-		system("cls");
-		printTabuleiro(tab);
-		if(verifTab == 1){
-			x=0;
-		}else if(verifTab == 2){
-			printf("----- VITÓRIA DAS BRANCAS -----\n");
-			jogo=0;
-		}else if(verifTab==3){
-			printf("----- VITÓRIA DAS PRETAS -----\n");
-			jogo=0;
-		}
-		
-	}
-	return 0;
+    int tab[8][8];
+    int vencedor=0,linha,coluna,escolha;
+    int qtdJogadas;
+    char iniciar[10];
+    Jogada jogadas[30];
+
+    printf("---------- Bem vindo! ----------\n");
+    printf("> Pronto para vencer Beth Harmon?\n\n\nDigite iniciar para gerar o tabuleiro!\n");
+    scanf("%s",iniciar);
+    
+    if(strcmp(iniciar,"iniciar") ==0){
+        system("cls");
+        IniciaTabuleiro(tab);
+    }
+
+    while (vencedor==0){
+        DesenhaTabuleiro(tab);
+        EscolhePeca(tab,&linha,&coluna);
+        qtdJogadas = CalculaJogadas(tab,linha,coluna,jogadas);
+        if (qtdJogadas>0){
+            escolha = EscolheJogada(qtdJogadas,jogadas);
+            vencedor = ExecutaJogada(tab,jogadas[escolha-1]);
+        }else printf("> Não há jogadas disponíveis para essa peça.");
+    }
+    if (vencedor>0){
+        printf("As brancas venceram!");
+    }else printf("As pretas venceram!");
 }
