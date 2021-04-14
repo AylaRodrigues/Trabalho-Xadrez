@@ -114,6 +114,18 @@ void *BuscaJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,
 			return NULL;
 		}
 	}	
+	
+void LiberaMemoria(struct Posicao *posicao)
+{
+   struct Posicao *p = posicao; Posicao *x;
+    while(p != NULL)
+    {
+        x = p->prox;
+
+        free(p);
+        p=x; 
+    }
+}
 
 struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
 	
