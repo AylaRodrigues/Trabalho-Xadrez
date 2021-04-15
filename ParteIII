@@ -115,12 +115,12 @@ void *BuscaJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,
         }
     }   
     
-void LiberaMemoria(struct Posicao *posicao)
+/*void LiberaMemoria(struct Posicao *posicao)
 {
     struct Peca *lista;
     posicao->brancas = DestroiPeca();//parametro da funcao destroi peça ta errado
 
-}
+}*/
 
 struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
     
@@ -555,6 +555,20 @@ struct Peca *DestroiPeca(struct Peca *lista){
 
 int ExecutaJogada(struct Jogada *jog, struct Posicao *posAtual){
 
+    //Promoção do peão para rainha
+    if (abs(posAtual->tab[jog->deLinha][jog->deColuna]->codigo)==PEAO)
+     {
+        if (jog->deLinha == 8)
+        {
+            posAtual->tab[jog->deLinha][jog->deColuna]->codigo==RAINHA;
+        }
+        else
+        if (jog->deLinha == 1)
+        {
+            posAtual->tab[jog->deLinha][jog->deColuna]->codigo== -RAINHA;
+        }
+     }
+
     if(posAtual->tab[jog->paraLinha][jog->paraColuna]==NULL) {
         posAtual->tab[jog->paraLinha][jog->paraColuna] = posAtual->tab[jog->deLinha][jog->deColuna];
         posAtual->tab[jog->deLinha][jog->deColuna] = NULL; //tira a peça
@@ -579,6 +593,7 @@ int ExecutaJogada(struct Jogada *jog, struct Posicao *posAtual){
         
         return x;
      }
+    
 }
 
 int main(){
