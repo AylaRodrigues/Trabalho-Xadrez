@@ -115,12 +115,6 @@ void *BuscaJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,
         }
     }   
     
-/*void LiberaMemoria(struct Posicao *posicao)
-{
-    struct Peca *lista;
-    posicao->brancas = DestroiPeca();//parametro da funcao destroi peça ta errado
-
-}*/
 
 struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
     
@@ -551,6 +545,13 @@ struct Peca *DestroiPeca(struct Peca *lista){
         lista=aux;
     }
     return NULL;
+}
+
+void LiberaMemoria(struct Posicao *posicao)
+{
+    posicao->brancas = DestroiPeca(posicao->brancas);
+    posicao->pretas = DestroiPeca(posicao->pretas);
+
 }
 
 int ExecutaJogada(struct Jogada *jog, struct Posicao *posAtual){
