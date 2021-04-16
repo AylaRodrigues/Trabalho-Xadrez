@@ -115,7 +115,6 @@ void *BuscaJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,
         }
     }   
     
-
 struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
     
     copia.jogVez = original.jogVez;
@@ -253,7 +252,9 @@ void *CalculaPeao(struct Jogada *lista,int linha,int coluna,struct Posicao posAt
                 InsereJogada(lista,linha+peca,coluna-1,linha,coluna); 
                 posAtual.tab[linha+peca][coluna-1]->ataques++;
             } 
-        } else if (posAtual.tab[linha+peca][coluna+1] != NULL) {
+        }
+        
+		if (posAtual.tab[linha+peca][coluna+1] != NULL) {
             
             if (coluna<7 && posAtual.tab[linha+peca][coluna+1]->codigo*peca<0){//verificar captura na direita
                 InsereJogada(lista,linha+peca,coluna+1,linha,coluna);
@@ -547,57 +548,73 @@ struct Peca *DestroiPeca(struct Peca *lista){
     return NULL;
 }
 
-void LiberaMemoria(struct Posicao *posicao)
-{
+void RemovePeca(struct Peca *aux) { 
+    aux->prox->ant = aux->ant;
+    aux->ant->prox = aux->prox;
+    free(aux);
+}
+
+void LiberaMemoria(struct Posicao *posicao) {
     posicao->brancas = DestroiPeca(posicao->brancas);
     posicao->pretas = DestroiPeca(posicao->pretas);
-
 }
 
-int ExecutaJogada(struct Jogada *jog, struct Posicao *posAtual){
+int ExecutaJogada(struct Jogada jog, struct Posicao *posAtual) {
 
-    //Promoção do peão para rainha
-    if (abs(posAtual->tab[jog->deLinha][jog->deColuna]->codigo)==PEAO)
-     {
-        if (jog->deLinha == 8)
-        {
-            posAtual->tab[jog->deLinha][jog->deColuna]->codigo==RAINHA;
-        }
-        else
-        if (jog->deLinha == 1)
-        {
-            posAtual->tab[jog->deLinha][jog->deColuna]->codigo== -RAINHA;
-        }
-     }
+    int x=0;
+    struct Peca *peca = posAtual->tab[jog.deLinha][jog.deColuna];
 
-    if(posAtual->tab[jog->paraLinha][jog->paraColuna]==NULL) {
-        posAtual->tab[jog->paraLinha][jog->paraColuna] = posAtual->tab[jog->deLinha][jog->deColuna];
-        posAtual->tab[jog->deLinha][jog->deColuna] = NULL; //tira a peça
-        posAtual->tab[jog->paraLinha][jog->paraColuna]->linha = jog->paraLinha;
-        posAtual->tab[jog->paraLinha][jog->paraColuna]->coluna = jog->paraColuna;
-        return 0;
-    }else{
-        int x;
-        if(abs(posAtual->tab[jog->paraLinha][jog->paraColuna]->codigo)==REI) { //verifica se o rei adversário será capturado
+    posAtual->tab[jog.deLinha][jog.deColuna] = NULL; //retira a peça do ligar
+
+    if (posAtual->tab[jog.paraLinha][jog.paraColuna]!=NULL){ //a peça fará uma captura
+        if (abs(posAtual->tab[jog.paraLinha][jog.paraColuna]->codigo)==REI) //rei capturado
             x=1;
-            
-        }else{
-            x=0;
-        }
-        
-        struct Peca *aux =posAtual->tab[jog->paraColuna][jog->paraColuna];
-        posAtual->tab[jog->paraLinha][jog->paraColuna] = posAtual->tab[jog->deLinha][jog->deColuna];
-        posAtual->tab[jog->deLinha][jog->deColuna] = NULL; 
-        posAtual->tab[jog->paraLinha][jog->paraColuna]->linha = jog->paraLinha;
-        posAtual->tab[jog->paraLinha][jog->paraColuna]->coluna = jog->paraColuna;
-        free(aux);
-        
-        return x;
-     }
+
+        RemovePeca(posAtual->tab[jog.paraLinha][jog.paraColuna]); //retira a peça que foi capturada da sua lista
+        if (posAtual->jogVez==1)
+            posAtual->qtdPretas--; //capturou peça preta
+        else posAtual->qtdBrancas--;//capturou peça branca
+    }
+
+    posAtual->tab[jog.paraLinha][jog.paraColuna] = peca;
+    peca->linha = jog.paraLinha;
+    peca->coluna = jog.paraColuna;
     
+    if(abs(peca->codigo) == PEAO){
+		if(peca->linha == 7){
+			peca->codigo = RAINHA;
+		}else if (peca->linha == 0){
+			peca->codigo = -RAINHA;
+		}
+	}
+
+    return x;
 }
 
-int main(){
+double AvaliaPosicao(struct Posicao pos) {
+	
+	double valorBranca = 0, valorPreta = 0, avaliacao;
+	
+	struct Peca *aux = pos.brancas->prox;
+	while(aux!=pos.brancas){
+		valorBranca = valorBranca + aux->codigo;
+		valorPreta = valorPreta + aux->ataques;
+		aux = aux->prox;
+	}
+	
+	aux = pos.pretas->prox;
+	while(aux!=pos.pretas){
+		valorPreta = valorPreta + aux->codigo;
+		valorBranca = valorBranca + aux->ataques;
+		aux = aux->prox;
+	}
+	
+	avaliacao = valorPreta*(-1) - valorBranca;
+	 
+	return avaliacao;
+}
+
+int main() {
     
     setlocale(LC_ALL,"");
     int fimDeJogo=0;
@@ -632,7 +649,7 @@ int main(){
             }
         }while(escolhida == NULL);
         
-        fimDeJogo = ExecutaJogada(escolhida,&posAtual);
+        fimDeJogo = ExecutaJogada(*escolhida,&posAtual);
         DesenhaTabuleiro(posAtual);
         posAtual.jogVez = posAtual.jogVez * (-1);
         jogadas = DestroiJogada(jogadas);
@@ -641,9 +658,9 @@ int main(){
             else printf("\n----- VITÓRIA DAS BRANCAS -----\n");
         }
     }
+
+    LiberaMemoria(&posAtual);
     
-    posAtual.brancas = DestroiPeca(posAtual.brancas);
-    posAtual.pretas = DestroiPeca(posAtual.pretas);
     
     return 0;
 }
