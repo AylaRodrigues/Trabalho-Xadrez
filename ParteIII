@@ -1,10 +1,10 @@
-//Ayla Rodrigues e Douglas Mareli
-//Eu vencerei Beth Harmon
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
 #include <windows.h>
+#include "Listas.h"
 
 #define PEAO    1
 #define CAVALO  2
@@ -12,16 +12,6 @@
 #define TORRE   4
 #define RAINHA  5
 #define REI     6
-
-struct Jogada {
-    int deLinha,deColuna,paraLinha,paraColuna;
-    struct Jogada *prox,*ant;
-};
-
-struct Peca {
-    int codigo,linha,coluna,ataques;
-    struct Peca *prox,*ant;
-};
 
 struct Posicao {
     int qtdBrancas;
@@ -46,162 +36,7 @@ void AjustaCor(int peca) {
     case REI: printf("\033[1;31m");break;
     }
 }
-
-struct Peca *CriaListaPeca() {
-    struct Peca *sentinela=(struct Peca *)malloc(sizeof(struct Peca));
-    sentinela->prox=sentinela;
-    sentinela->ant=sentinela;
-    return sentinela;
-}
-
-struct Peca *CriaPeca(int codigo, int linha, int coluna) {
-    struct Peca *resp = (struct Peca *) malloc(sizeof(struct Peca));
-    resp->codigo = codigo;
-    resp->linha=linha;
-    resp->coluna=coluna;
-    resp->ant = NULL;
-    resp->prox = NULL;
-
-    return resp;
-}
-
-void *InserePeca(struct Peca *lista,int codigo, int linha, int coluna) {
-    struct Peca *novo = CriaPeca(codigo,linha,coluna);
-    novo->prox=lista;
-    novo->ant=lista->ant;
-    lista->ant->prox=novo;
-    lista->ant=novo;
-    
-    return novo;
-}
-
-struct Jogada *CriaListaJogada() {
-    struct Jogada *sentinela =(struct Jogada *)malloc(sizeof(struct Jogada));
-    sentinela->prox = sentinela;
-    sentinela->ant = sentinela;
-    return sentinela;
-}
-
-struct Jogada *CriaJogada(int deLinha, int deColuna, int paraLinha, int paraColuna) {
-    struct Jogada *jog =(struct Jogada *)malloc(sizeof(struct Jogada));
-    jog->deLinha = deLinha;
-    jog->deColuna = deColuna;
-    jog->paraLinha = paraLinha;
-    jog->paraColuna = paraColuna;
-    jog->prox = NULL;
-    jog->ant = NULL;
-    
-    return jog;
-}
-
-void *InsereJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,int deColuna) {
-    struct Jogada *novo = CriaJogada(deLinha,deColuna,paraLinha,paraColuna);
-    novo->prox=lista;
-    novo->ant=lista->ant;
-    lista->ant->prox=novo;
-    lista->ant=novo;
-    
-}
-
-void *BuscaJogada(struct Jogada *lista,int paraLinha,int paraColuna,int deLinha,int deColuna) {
-    struct Jogada *aux = lista->prox;
-    while(aux != lista && (aux->deLinha != deLinha || aux->deColuna != deColuna || aux->paraLinha !=paraLinha || aux->paraColuna !=paraColuna)){
-        aux= aux->prox;
-    }
-        if(aux!=lista){
-            return aux;
-        }else{
-            return NULL;
-        }
-    }   
-    
-struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
-    
-    copia.jogVez = original.jogVez;
-    copia.qtdBrancas = original.qtdBrancas;
-    copia.qtdPretas = original.qtdPretas;
-    
-    copia.brancas = CriaListaPeca();
-    copia.pretas = CriaListaPeca();
-    
-    for(int i = 0; i < 8; i++) {
-        for(int j =0; j < 8; j++) {
-            if (original.tab[i][j] == NULL) {
-                copia.tab[i][j] = NULL;
-            }else if (original.tab[i][j]<0){
-                copia.tab[i][j] = InserePeca(copia.pretas,original.tab[i][j]->codigo,i,j);
-            }else {
-                copia.tab[i][j] = InserePeca(copia.brancas,original.tab[i][j]->codigo,i,j);
-            }
-        }
-    }
-    
-    return copia;
-}
-
-struct Posicao IniciaTabuleiro() {
-    struct Posicao posInicial;
-    
-    posInicial.brancas = CriaListaPeca();
-    posInicial.pretas = CriaListaPeca(); 
-    
-    for (int i=0;i<8;i++)
-        for (int j=0;j<8;j++)
-            if (i==1)
-            {
-                posInicial.tab[i][j] = InserePeca(posInicial.brancas,PEAO,i,j);
-            }else if (i==6)
-            {
-                posInicial.tab[i][j] = InserePeca(posInicial.pretas,-PEAO,i,j);
-                
-            }else
-            { 
-                posInicial.tab[i][j]=NULL;//outras casas
-            }
-            
-    //[0][0] =[0][7] = -TORRE;//torres brancas
-    posInicial.tab[0][0] = InserePeca(posInicial.brancas,TORRE,0,0); 
-    posInicial.tab[0][7] = InserePeca(posInicial.brancas,TORRE,0,7); 
-    
-    //[7][0] =[7][7] = -TORRE;//torres pretas
-    posInicial.tab[7][0] = InserePeca(posInicial.pretas,-TORRE,7,0);
-    posInicial.tab[7][7] = InserePeca(posInicial.pretas,-TORRE,7,7);
-    
-   //[0][1] = [0][6] = CAVALO; //cavalos brancos
-    posInicial.tab[0][1] = InserePeca(posInicial.brancas,CAVALO,0,1); 
-    posInicial.tab[0][6] = InserePeca(posInicial.brancas,CAVALO,0,6); 
-    
-    //[7][1] = [7][6] = -CAVALO;//cavalos pretos
-    posInicial.tab[7][1] = InserePeca(posInicial.pretas,-CAVALO,7,1);
-    posInicial.tab[7][6] = InserePeca(posInicial.pretas,-CAVALO,7,6);
-    
-    //[0][2] = [0][5] = BISPO;//bispos brancos
-    posInicial.tab[0][2] = InserePeca(posInicial.brancas,BISPO,0,2); 
-    posInicial.tab[0][5] = InserePeca(posInicial.brancas,BISPO,0,5); 
-    
-    //[7][2] = [7][5] = -BISPO;//bispos pretos
-    posInicial.tab[7][2] = InserePeca(posInicial.pretas,-BISPO,7,2);
-    posInicial.tab[7][5] = InserePeca(posInicial.pretas,-BISPO,7,5);
-    
-    //[0][3] = RAINHA;//rainha branca
-    posInicial.tab[0][3] = InserePeca(posInicial.brancas,RAINHA,0,3);
-
-    //[0][4] = REI;//rei branco
-    posInicial.tab[0][4] = InserePeca(posInicial.brancas,REI,0,4);
-    
-    //[7][3] = -RAINHA;//rainha preta
-    posInicial.tab[7][3] = InserePeca(posInicial.pretas,-RAINHA,7,3);
-    
-    //[7][4] = -REI;//rei preto
-    posInicial.tab[7][4] = InserePeca(posInicial.pretas,-REI,7,4);
-    
-    posInicial.qtdPretas=16;
-    posInicial.qtdBrancas=16;
-    posInicial.jogVez = 1;
-    
-    return posInicial;
-}
-
+      
 void DesenhaTabuleiro(struct Posicao atual) {
     system("cls");
     Sleep(500);
@@ -493,6 +328,98 @@ void *CalculaRei(struct Jogada *lista, int linha, int coluna,struct Posicao posA
     }
 }
 
+void LiberaMemoria(struct Posicao *posicao) {
+    posicao->brancas = DestroiListaPeca(posicao->brancas);
+    posicao->pretas = DestroiListaPeca(posicao->pretas);
+}
+
+struct Posicao IniciaTabuleiro() {
+    struct Posicao posInicial;
+    
+    posInicial.brancas = CriaListaPeca();
+    posInicial.pretas = CriaListaPeca(); 
+    
+    for (int i=0;i<8;i++)
+        for (int j=0;j<8;j++)
+            if (i==1)
+            {
+                posInicial.tab[i][j] = InserePeca(posInicial.brancas,PEAO,i,j);
+            }else if (i==6)
+            {
+                posInicial.tab[i][j] = InserePeca(posInicial.pretas,-PEAO,i,j);
+                
+            }else
+            { 
+                posInicial.tab[i][j]=NULL;//outras casas
+            }
+            
+    //[0][0] =[0][7] = -TORRE;//torres brancas
+    posInicial.tab[0][0] = InserePeca(posInicial.brancas,TORRE,0,0); 
+    posInicial.tab[0][7] = InserePeca(posInicial.brancas,TORRE,0,7); 
+    
+    //[7][0] =[7][7] = -TORRE;//torres pretas
+    posInicial.tab[7][0] = InserePeca(posInicial.pretas,-TORRE,7,0);
+    posInicial.tab[7][7] = InserePeca(posInicial.pretas,-TORRE,7,7);
+    
+   //[0][1] = [0][6] = CAVALO; //cavalos brancos
+    posInicial.tab[0][1] = InserePeca(posInicial.brancas,CAVALO,0,1); 
+    posInicial.tab[0][6] = InserePeca(posInicial.brancas,CAVALO,0,6); 
+    
+    //[7][1] = [7][6] = -CAVALO;//cavalos pretos
+    posInicial.tab[7][1] = InserePeca(posInicial.pretas,-CAVALO,7,1);
+    posInicial.tab[7][6] = InserePeca(posInicial.pretas,-CAVALO,7,6);
+    
+    //[0][2] = [0][5] = BISPO;//bispos brancos
+    posInicial.tab[0][2] = InserePeca(posInicial.brancas,BISPO,0,2); 
+    posInicial.tab[0][5] = InserePeca(posInicial.brancas,BISPO,0,5); 
+    
+    //[7][2] = [7][5] = -BISPO;//bispos pretos
+    posInicial.tab[7][2] = InserePeca(posInicial.pretas,-BISPO,7,2);
+    posInicial.tab[7][5] = InserePeca(posInicial.pretas,-BISPO,7,5);
+    
+    //[0][3] = RAINHA;//rainha branca
+    posInicial.tab[0][3] = InserePeca(posInicial.brancas,RAINHA,0,3);
+
+    //[0][4] = REI;//rei branco
+    posInicial.tab[0][4] = InserePeca(posInicial.brancas,REI,0,4);
+    
+    //[7][3] = -RAINHA;//rainha preta
+    posInicial.tab[7][3] = InserePeca(posInicial.pretas,-RAINHA,7,3);
+    
+    //[7][4] = -REI;//rei preto
+    posInicial.tab[7][4] = InserePeca(posInicial.pretas,-REI,7,4);
+    
+    posInicial.qtdPretas=16;
+    posInicial.qtdBrancas=16;
+    posInicial.jogVez = 1;
+    
+    return posInicial;
+}
+
+struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
+    
+    copia.jogVez = original.jogVez;
+    copia.qtdBrancas = original.qtdBrancas;
+    copia.qtdPretas = original.qtdPretas;
+    
+    copia.brancas = CriaListaPeca();
+    copia.pretas = CriaListaPeca();
+    
+    for(int i = 0; i < 8; i++) {
+        for(int j =0; j < 8; j++) {
+            if (original.tab[i][j] == NULL) {
+                copia.tab[i][j] = NULL;
+            }else if (original.tab[i][j]->codigo<0){
+                copia.tab[i][j] = InserePeca(copia.pretas,original.tab[i][j]->codigo,i,j);
+            }else {
+                copia.tab[i][j] = InserePeca(copia.brancas,original.tab[i][j]->codigo,i,j);
+            }
+        }
+    }
+    
+    return copia;
+}
+
 struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
     struct Jogada *jogadas = CriaListaJogada();  
     struct Peca *aux;
@@ -524,39 +451,6 @@ struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
         }
          
     return jogadas;
-}
-
-struct Jogada *DestroiJogada(struct Jogada *lista) {
-    struct Jogada *aux;
-    lista->ant->prox=NULL;
-    while(lista != NULL) {
-        aux = lista-> prox;
-        free(lista);
-        lista=aux;
-    }
-    return NULL;
-}
-
-struct Peca *DestroiPeca(struct Peca *lista){
-    struct Peca *aux;
-    lista->ant->prox=NULL;
-    while(lista != NULL) {
-        aux = lista-> prox;
-        free(lista);
-        lista=aux;
-    }
-    return NULL;
-}
-
-void RemovePeca(struct Peca *aux) { 
-    aux->prox->ant = aux->ant;
-    aux->ant->prox = aux->prox;
-    free(aux);
-}
-
-void LiberaMemoria(struct Posicao *posicao) {
-    posicao->brancas = DestroiPeca(posicao->brancas);
-    posicao->pretas = DestroiPeca(posicao->pretas);
 }
 
 int ExecutaJogada(struct Jogada jog, struct Posicao *posAtual) {
@@ -660,7 +554,6 @@ int main() {
     }
 
     LiberaMemoria(&posAtual);
-    
     
     return 0;
 }
