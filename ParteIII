@@ -1,10 +1,11 @@
 //Ayla Rodrigues e Douglas Mareli
-//Eu vencerei Beth Harmon
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
 #include <windows.h>
+#include <math.h>
 #include "Listas.h"
 
 #define PEAO    1
@@ -13,6 +14,7 @@
 #define TORRE   4
 #define RAINHA  5
 #define REI     6
+#define MAX_NIVEL 6
 
 struct Posicao {
     int qtdBrancas;
@@ -421,39 +423,6 @@ struct Posicao CopiaPosicao(struct Posicao original,struct Posicao copia){
     return copia;
 }
 
-struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
-    struct Jogada *jogadas = CriaListaJogada();  
-    struct Peca *aux;
-    struct Peca *inicio;
-    
-    if(posAtual.jogVez == 1){
-        aux = posAtual.brancas->prox;
-        inicio = posAtual.brancas;
-    }else {
-        aux = posAtual.pretas->prox;
-        inicio = posAtual.pretas;
-    }
-    
-    while(aux!=inicio)
-        {
-            aux->ataques = 0;
-            switch(abs(aux->codigo))
-            {
-                case PEAO: CalculaPeao(jogadas,aux->linha,aux->coluna,posAtual); break;
-                case CAVALO: CalculaCavalo(jogadas,aux->linha,aux->coluna,posAtual); break;
-                case BISPO: CalculaBispo(jogadas,aux->linha,aux->coluna,posAtual); break;
-                case TORRE: CalculaTorre(jogadas,aux->linha,aux->coluna,posAtual); break;
-                case RAINHA: CalculaTorre(jogadas,aux->linha,aux->coluna,posAtual);
-                            CalculaBispo(jogadas,aux->linha,aux->coluna,posAtual);
-                            break;
-                case REI: CalculaRei(jogadas,aux->linha,aux->coluna,posAtual); break;
-            }
-            aux=aux->prox;
-        }
-         
-    return jogadas;
-}
-
 int ExecutaJogada(struct Jogada jog, struct Posicao *posAtual) {
 
     int x=0;
@@ -509,6 +478,84 @@ double AvaliaPosicao(struct Posicao pos) {
 	return avaliacao;
 }
 
+struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
+    struct Jogada *jogadas = CriaListaJogada();  
+    struct Peca *aux;
+    struct Peca *inicio;
+    
+    if(posAtual.jogVez == 1){
+        aux = posAtual.brancas->prox;
+        inicio = posAtual.brancas;
+    }else {
+        aux = posAtual.pretas->prox;
+        inicio = posAtual.pretas;
+    }
+    
+    while(aux!=inicio)
+        {
+            aux->ataques = 0;
+            switch(abs(aux->codigo))
+            {
+                case PEAO: CalculaPeao(jogadas,aux->linha,aux->coluna,posAtual); break;
+                case CAVALO: CalculaCavalo(jogadas,aux->linha,aux->coluna,posAtual); break;
+                case BISPO: CalculaBispo(jogadas,aux->linha,aux->coluna,posAtual); break;
+                case TORRE: CalculaTorre(jogadas,aux->linha,aux->coluna,posAtual); break;
+                case RAINHA: CalculaTorre(jogadas,aux->linha,aux->coluna,posAtual);
+                            CalculaBispo(jogadas,aux->linha,aux->coluna,posAtual);
+                            break;
+                case REI: CalculaRei(jogadas,aux->linha,aux->coluna,posAtual); break;
+            }
+            aux=aux->prox;
+        }
+         
+    return jogadas;
+}
+
+struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
+	struct Jogada *lista,*jogadaAux,*listaBrancas,*listaPretas;
+	struct Jogada melhorJogada, jogadaIA;
+	struct Posicao posCopia;
+	double melhorValor, valorJogada;
+	int podado = 0;
+	
+	if(nivel % 2 == 0) {
+		melhorValor = -INFINITY;
+	}else {
+		melhorValor = INFINITY;
+	}
+	
+	if(pos.jogVez == 1) {
+		pos.jogVez = pos.jogVez * -1;
+	} 
+		listaPretas = CalculaMovimentosPossiveis(pos);
+		pos.jogVez = pos.jogVez * -1;
+		listaBrancas = CalculaMovimentosPossiveis(pos);
+	
+	if(nivel % 2 == 0) {
+		lista = listaPretas;
+	} else {
+		lista = listaBrancas;
+	}
+	
+	jogadaAux = lista->prox;
+	
+	while(jogadaAux != lista && podado == 0) {
+		posCopia = CopiaPosicao(pos,posCopia);
+		ExecutaJogada(*jogadaAux,&posCopia);
+		
+		if(nivel < MAX_NIVEL) {
+			
+			if (nivel < MAX_NIVEL && nivel % 2 == 0) {
+				jogadaIA = ExecutaIA(posCopia,nivel+1,melhorValor,beta);
+			}else{
+				jogadaIA = ExecutaIA(posCopia,nivel+1,alfa,melhorValor);
+			}
+			
+			ExecutaJogada(jogadaIA,&posCopia);
+		}
+	}
+}
+
 int main() {
     
     setlocale(LC_ALL,"");
@@ -518,7 +565,6 @@ int main() {
     char iniciar[10];
     struct Jogada *jogadas;
     struct Posicao posAtual;
-    struct Posicao posCopia;
 
     printf("---------- Bem vindo! ----------\n");
     printf("> Pronto para vencer Beth Harmon?\n\n\nDigite 'pronto' para gerar o tabuleiro!\n");
