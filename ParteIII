@@ -1,3 +1,4 @@
+//Ayla Rodrigues e Douglas Mareli
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +13,7 @@
 #define TORRE   4
 #define RAINHA  5
 #define REI     6
-#define MAX_NIVEL 4
+#define MAX_NIVEL 5
 
 struct Posicao {
     int qtdBrancas;
@@ -551,14 +552,11 @@ struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 	}
 	
 	if(pos.jogVez == 1) {
-		listaBrancas = CalculaMovimentosPossiveis(pos);	
-		pos.jogVez = -pos.jogVez;
+		pos.jogVez = pos.jogVez * -1;
+	} 
 		listaPretas = CalculaMovimentosPossiveis(pos);
-	}else{
-		listaPretas = CalculaMovimentosPossiveis(pos);
-		pos.jogVez = -pos.jogVez;
+		pos.jogVez = pos.jogVez * -1;
 		listaBrancas = CalculaMovimentosPossiveis(pos);
-	}
 		
 	
 	if(nivel % 2 == 0) {
@@ -602,18 +600,39 @@ struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 		LiberaMemoria(&posCopia);
 	}
 	
+	listaBrancas = DestroiJogadas(listaBrancas);
+	listaPretas = DestroiJogadas(listaPretas);
+	
+	
 	return melhorJogada;
+}
+
+void SalvaJogada(FILE *arq, struct Jogada *jogada){
+    
+    if(jogada == NULL) {
+    	arq = fopen("jogadas.bin","wb");
+	}else {
+		arq = fopen("jogadas.bin","wb");
+		fwrite(&jogada->deLinha,sizeof(int),1,arq);
+		fwrite(&jogada->deColuna,sizeof(int),1,arq);
+		fwrite(&jogada->paraLinha,sizeof(int),1,arq);
+		fwrite(&jogada->paraColuna,sizeof(int),1,arq);
+	}
+	
+	fclose(arq);
 }
 
 int main() {
 	
     setlocale(LC_ALL,"");
-    FILE *arq;
+    FILE *jogadasSalvas;
     int fimDeJogo=0;
     char iniciar[10];
     struct Jogada *jogadas = NULL;
     struct Posicao posAtual;
 
+	SalvaJogada(jogadasSalvas,jogadas);
+	
     printf("---------- Bem vindo! ----------\n");
     printf("> Pronto para vencer Beth Harmon?\n\n\nDigite 'pronto' para gerar o tabuleiro!\n");
     scanf("%s",iniciar);
@@ -629,20 +648,24 @@ int main() {
     	if(posAtual.jogVez == 1) {
 	        jogadas=CalculaMovimentosPossiveis(posAtual);
 	        escolhida = BuscaJogada(jogadas);
-	        DestroiJogada(jogadas);
+	        DestroiJogadas(jogadas);
         }else {
         	escolhida = ExecutaIA(posAtual,0,-INFINITY,INFINITY);
 		}
 		
+		SalvaJogada(jogadasSalvas,&escolhida);
+		
         fimDeJogo = ExecutaJogada(escolhida,&posAtual);
         DesenhaTabuleiro(posAtual);
-			
-        if(fimDeJogo == 1){
-            if(posAtual.jogVez == 1) printf("\n----- VITÓRIA DAS PRETAS -----\n");
-            else printf("\n----- VITÓRIA DAS BRANCAS -----\n");
-        }
-    }
-
+	}		
+    
+    if(posAtual.jogVez == 1) {	
+		printf("\n----- VITÓRIA DAS PRETAS -----\n");
+    }else {
+		printf("\n----- VITÓRIA DAS BRANCAS -----\n");
+	}
+    
+    
     LiberaMemoria(&posAtual);
     
     return 0;
