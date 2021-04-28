@@ -1,5 +1,3 @@
-//Ayla Rodrigues e Douglas Mareli
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +12,7 @@
 #define TORRE   4
 #define RAINHA  5
 #define REI     6
-#define MAX_NIVEL 6
+#define MAX_NIVEL 4
 
 struct Posicao {
     int qtdBrancas;
@@ -451,31 +449,9 @@ int ExecutaJogada(struct Jogada jog, struct Posicao *posAtual) {
 			peca->codigo = -RAINHA;
 		}
 	}
-
+	
+	posAtual->jogVez = -posAtual->jogVez;
     return x;
-}
-
-double AvaliaPosicao(struct Posicao pos) {
-	
-	double valorBranca = 0, valorPreta = 0, avaliacao;
-	
-	struct Peca *aux = pos.brancas->prox;
-	while(aux!=pos.brancas){
-		valorBranca = valorBranca + aux->codigo;
-		valorPreta = valorPreta + aux->ataques;
-		aux = aux->prox;
-	}
-	
-	aux = pos.pretas->prox;
-	while(aux!=pos.pretas){
-		valorPreta = valorPreta + aux->codigo;
-		valorBranca = valorBranca + aux->ataques;
-		aux = aux->prox;
-	}
-	
-	avaliacao = valorPreta*(-1) - valorBranca;
-	 
-	return avaliacao;
 }
 
 struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
@@ -511,6 +487,56 @@ struct Jogada *CalculaMovimentosPossiveis(struct Posicao posAtual) {
     return jogadas;
 }
 
+double AvaliaPosicao(struct Posicao pos) {
+	
+	double valorBranca = 0, valorPreta = 0, avaliacao;
+
+	struct Peca *aux = pos.brancas->prox;
+	while(aux!=pos.brancas){
+		if(aux->codigo == 1) {
+			valorBranca = valorBranca + (abs(0 - aux->linha)*0.05) +1;
+		}
+		switch(aux->codigo) {
+			case CAVALO: valorBranca = valorBranca+3.2; 
+						valorPreta = valorPreta + aux->ataques*3.2; break;
+			case BISPO: valorBranca = valorBranca+3.33; 
+						valorPreta = valorPreta + aux->ataques*3.33; break;
+			case TORRE: valorBranca = valorBranca+5.1; 
+						valorPreta = valorPreta + aux->ataques*5.1; break;
+			case RAINHA: valorBranca = valorBranca+8.8; 
+						valorPreta = valorPreta + aux->ataques*8.8; break;
+			case REI: valorBranca = valorBranca+100; 
+						valorPreta = valorPreta + aux->ataques*100; break;
+		}
+		
+		aux = aux->prox;
+	}
+	
+	aux = pos.pretas->prox;
+	while(aux!=pos.pretas) {
+		if(aux->codigo == -1) {
+		valorPreta = valorPreta + ((7 - aux->linha)*0.05) + 1; 
+		}
+		switch(aux->codigo) {
+			case -CAVALO: valorPreta = valorPreta+3.2; 
+						valorBranca = valorBranca + aux->ataques*3.2; break;
+			case -BISPO: valorPreta = valorPreta+3.33; 
+						valorBranca = valorBranca + aux->ataques*3.33; break;
+			case -TORRE: valorPreta = valorPreta+5.1; 
+						valorBranca = valorBranca + aux->ataques*5.1; break;
+			case -RAINHA: valorPreta =valorPreta+8.8; 
+						valorBranca = valorBranca + aux->ataques*8.8; break;
+			case -REI: valorPreta = valorPreta+100; 
+						valorBranca = valorBranca + aux->ataques*100; break;
+		}
+		aux = aux->prox;
+	}
+	
+	avaliacao = valorPreta - valorBranca;
+	 
+	return avaliacao;
+}
+
 struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 	struct Jogada *lista,*jogadaAux,*listaBrancas,*listaPretas;
 	struct Jogada melhorJogada, jogadaIA;
@@ -525,11 +551,15 @@ struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 	}
 	
 	if(pos.jogVez == 1) {
-		pos.jogVez = pos.jogVez * -1;
-	} 
+		listaBrancas = CalculaMovimentosPossiveis(pos);	
+		pos.jogVez = -pos.jogVez;
 		listaPretas = CalculaMovimentosPossiveis(pos);
-		pos.jogVez = pos.jogVez * -1;
+	}else{
+		listaPretas = CalculaMovimentosPossiveis(pos);
+		pos.jogVez = -pos.jogVez;
 		listaBrancas = CalculaMovimentosPossiveis(pos);
+	}
+		
 	
 	if(nivel % 2 == 0) {
 		lista = listaPretas;
@@ -545,7 +575,7 @@ struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 		
 		if(nivel < MAX_NIVEL) {
 			
-			if (nivel < MAX_NIVEL && nivel % 2 == 0) {
+			if (nivel % 2 == 0) {
 				jogadaIA = ExecutaIA(posCopia,nivel+1,melhorValor,beta);
 			}else{
 				jogadaIA = ExecutaIA(posCopia,nivel+1,alfa,melhorValor);
@@ -553,17 +583,35 @@ struct Jogada ExecutaIA(struct Posicao pos,int nivel, double alfa, double beta){
 			
 			ExecutaJogada(jogadaIA,&posCopia);
 		}
+		
+		valorJogada = AvaliaPosicao(posCopia);
+		
+		if(valorJogada < alfa || valorJogada > beta) {
+			podado = 1;
+		}
+		
+		if(nivel % 2 == 0 && valorJogada >= melhorValor) {
+			melhorValor = valorJogada;
+			melhorJogada = *jogadaAux;
+		}else if(nivel % 2 != 0 && valorJogada <= melhorValor) {
+			melhorValor = valorJogada;
+			melhorJogada = *jogadaAux;
+		}
+		
+		jogadaAux = jogadaAux->prox;
+		LiberaMemoria(&posCopia);
 	}
+	
+	return melhorJogada;
 }
 
 int main() {
-    
+	
     setlocale(LC_ALL,"");
+    FILE *arq;
     int fimDeJogo=0;
-    int deLinha,deColuna,paraLinha,paraColuna,escolha;
-    int qtdJogadas;
     char iniciar[10];
-    struct Jogada *jogadas;
+    struct Jogada *jogadas = NULL;
     struct Posicao posAtual;
 
     printf("---------- Bem vindo! ----------\n");
@@ -575,15 +623,20 @@ int main() {
         DesenhaTabuleiro(posAtual);
     }
     
-    struct Jogada *escolhida = NULL;
-    while (fimDeJogo==0){
-        jogadas=CalculaMovimentosPossiveis(posAtual);
-        escolhida = BuscaJogada(jogadas);
-        
-        fimDeJogo = ExecutaJogada(*escolhida,&posAtual);
+    struct Jogada escolhida;
+    while (fimDeJogo==0) {
+    	
+    	if(posAtual.jogVez == 1) {
+	        jogadas=CalculaMovimentosPossiveis(posAtual);
+	        escolhida = BuscaJogada(jogadas);
+	        DestroiJogada(jogadas);
+        }else {
+        	escolhida = ExecutaIA(posAtual,0,-INFINITY,INFINITY);
+		}
+		
+        fimDeJogo = ExecutaJogada(escolhida,&posAtual);
         DesenhaTabuleiro(posAtual);
-        posAtual.jogVez = posAtual.jogVez * (-1);
-        jogadas = DestroiJogada(jogadas);
+			
         if(fimDeJogo == 1){
             if(posAtual.jogVez == 1) printf("\n----- VITÓRIA DAS PRETAS -----\n");
             else printf("\n----- VITÓRIA DAS BRANCAS -----\n");
