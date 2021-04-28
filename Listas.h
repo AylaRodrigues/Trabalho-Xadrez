@@ -63,8 +63,8 @@ struct Jogada BuscaJogada(struct Jogada *lista) {
 	    }while(aux == lista);
     } 
     
-    struct Jogada *DestroiJogada(struct Jogada *lista) {
-    struct Jogada *aux;
+struct Jogada *DestroiJogadas(struct Jogada *lista) {
+    struct Jogada *aux = lista->prox;
     lista->ant->prox=NULL;
     while(lista != NULL) {
         aux = lista-> prox;
